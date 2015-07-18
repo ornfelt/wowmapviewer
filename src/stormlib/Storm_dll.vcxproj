@@ -41,8 +41,8 @@
     <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\bin\Storm_dll\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>.\bin\Storm_dll\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>..\..\output\debug\</OutDir>
+    <IntDir>..\..\output\debug\$(ProjectName)\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>

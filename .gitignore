@@ -1,0 +1,6 @@
+*.vcxproj.filters
+*.vcxproj.user
+*.sdf
+*.opensdf
+*.suo
+output
