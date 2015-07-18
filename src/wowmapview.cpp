@@ -82,25 +82,7 @@ void gLog(char *str, ...)
 
 void getGamePath()
 {
-#ifdef _WIN32
-	HKEY key;
-	DWORD t,s;
-	LONG l;
-	s = 1024;
-	memset(gamepath,0,s);
-	l = RegOpenKeyEx(HKEY_LOCAL_MACHINE,"SOFTWARE\\Blizzard Entertainment\\World of Warcraft\\Beta",0,KEY_QUERY_VALUE,&key);
-	if (l != ERROR_SUCCESS)
-		l = RegOpenKeyEx(HKEY_LOCAL_MACHINE,"SOFTWARE\\Blizzard Entertainment\\World of Warcraft\\PTR",0,KEY_QUERY_VALUE,&key);
-	if (l != ERROR_SUCCESS)
-		l = RegOpenKeyEx(HKEY_LOCAL_MACHINE,"SOFTWARE\\Blizzard Entertainment\\World of Warcraft",0,KEY_QUERY_VALUE,&key);
-	if (l == ERROR_SUCCESS) {
-		l = RegQueryValueEx(key,"InstallPath",0,&t,(LPBYTE)gamepath,&s);
-		RegCloseKey(key);
-		strcat(gamepath,"Data\\");
-	}
-#else
-	strcpy(gamepath,"data/");
-#endif
+  strcpy(gamepath, "F:\\games\\WOW\\TBC\\data");
 }
 
 
