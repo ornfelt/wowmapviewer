@@ -82,7 +82,7 @@ void gLog(char *str, ...)
 
 void getGamePath()
 {
-  strcpy(gamepath, "F:\\games\\WOW\\TBC\\data");
+  strcpy(gamepath, "E:\\game\\WLK\\Data\\");
 }
 
 

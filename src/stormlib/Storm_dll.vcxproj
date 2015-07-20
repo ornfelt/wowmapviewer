@@ -41,14 +41,14 @@
     <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>../../output/</OutDir>
-    <IntDir>../../output/</IntDir>
+    <OutDir>../../output/dbg/</OutDir>
+    <IntDir>../../output/dbg/$(ProjectName)</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\bin\Storm_dll\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>.\bin\Storm_dll\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>../../output/opt/</OutDir>
+    <IntDir>../../output/opt/$(ProjectName)</IntDir>
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
