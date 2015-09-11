@@ -124,24 +124,24 @@
     <IntDir>./bin/$(ProjectName)/$(Platform)/$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAS|Win32'">
-    <OutDir>../../output/opt/</OutDir>
-    <IntDir>../../output/opt/$(ProjectName)</IntDir>
+    <OutDir>../../output/dbg/</OutDir>
+    <IntDir>../../output/dbg/$(ProjectName)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugAS|x64'">
     <OutDir>../lib/Windows/64bit\</OutDir>
     <IntDir>./bin/$(ProjectName)/$(Platform)/$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseAD|Win32'">
-    <OutDir>../lib/Windows/32bit\</OutDir>
-    <IntDir>./bin/$(ProjectName)/$(Platform)/$(Configuration)\</IntDir>
+    <OutDir>../../output/opt/</OutDir>
+    <IntDir>../../output/opt/$(ProjectName)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseAD|x64'">
     <OutDir>../lib/Windows/64bit\</OutDir>
     <IntDir>./bin/$(ProjectName)/$(Platform)/$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseAS|Win32'">
-    <OutDir>../lib/Windows/32bit\</OutDir>
-    <IntDir>./bin/$(ProjectName)/$(Platform)/$(Configuration)\</IntDir>
+    <OutDir>../../output/opt</OutDir>
+    <IntDir>../../output/opt/$(ProjectName)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseAS|x64'">
     <OutDir>../lib/Windows/64bit\</OutDir>

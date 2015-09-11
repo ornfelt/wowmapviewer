@@ -129,7 +129,7 @@
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <ProgramDatabaseFile>$(IntDir)SDL.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
-      <ImportLibrary>.\Release/SDL.lib</ImportLibrary>
+      <ImportLibrary>$(OutDir)SDL.lib</ImportLibrary>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
