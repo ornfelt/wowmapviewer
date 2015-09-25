@@ -79,11 +79,6 @@ MyMenu::MyMenu()
   bg = 0;
   lastbg = -1;
   //randBackground();
-
-  // int32 index = find_index("ZulAman");
-  // LoadWorld(index);
-  // InitWorld(x, y);
-  // InitWorld(300, 300);
 }
 
 MyMenu::~MyMenu() {
@@ -166,6 +161,13 @@ void MyMenu::tick(float t, float dt) {
   if (bg) bg->updateEmitters(dt);
 
   //if (bg==0) randBackground();
+
+  if (gWorld == 0) {
+    int32 index = find_index("ZulAman");
+    LoadWorld(index);
+    InitWorld(354, 377);
+    // cmd = CMD_SELECT_MINIMAP;
+  }
 
   if (cmd==CMD_DO_LOAD_WORLD) {
     InitWorld(x, y);
