@@ -4,3 +4,6 @@
 *.opensdf
 *.suo
 output
+
+*.obj
+*.iobj
