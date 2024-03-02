@@ -1,0 +1,104 @@
+﻿  areadb.cpp
+  dbcfile.cpp
+  font.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\font.cpp(122,2): warning C4996: 'vsprintf': This function or variable may be unsafe. Consider using vsprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\font.cpp(135,2): warning C4996: 'vsprintf': This function or variable may be unsafe. Consider using vsprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  frustum.cpp
+  liquid.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\liquid.cpp(306,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  maptile.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\maptile.cpp(257,5): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\maptile.cpp(262,5): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\maptile.cpp(269,5): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\maptile.cpp(855,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  menu.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\menu.cpp(136,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\menu.cpp(537,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  model.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\model.cpp(15,2): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\model.cpp(263,5): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\model.cpp(446,4): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  mpq_stormlib.cpp
+  particle.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\particle.cpp(641,44): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\particle.cpp(641,23): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\animated.h(18,23): warning C4244: 'return': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=uint8
+          ]
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\animated.h(164,1): message : see reference to function template instantiation 'T interpolate<T>(const float,const T &,const T &)' being compiled
+          with
+          [
+              T=uint8
+          ]
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\animated.h(132,1): message : while compiling class template member function 'T Animated<T,T,Identity<T>>::getValue(int,int)'
+          with
+          [
+              T=uint8
+          ]
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\particle.cpp(163,8): message : see reference to function template instantiation 'T Animated<T,T,Identity<T>>::getValue(int,int)' being compiled
+          with
+          [
+              T=uint8
+          ]
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\particle.h(52,18): message : see reference to class template instantiation 'Animated<uint8,T,Identity<T>>' being compiled
+          with
+          [
+              T=uint8
+          ]
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\animated.h(34,31): warning C4244: 'return': conversion from 'float' to 'T', possible loss of data
+          with
+          [
+              T=uint8
+          ]
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\animated.h(169,1): message : see reference to function template instantiation 'T interpolateHermite<T>(const float,const T &,const T &,const T &,const T &)' being compiled
+          with
+          [
+              T=uint8
+          ]
+  shaders.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\shaders.cpp(57,13): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  sky.cpp
+  test.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\test.cpp(318,15): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  util.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\util.cpp(27,10): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\util.cpp(32,9): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\util.cpp(50,12): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\util.cpp(136,4): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  video.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\video.cpp(409,12): warning C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  wmo.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wmo.cpp(769,2): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wmo.cpp(773,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  world.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\world.cpp(109,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\world.cpp(190,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\world.cpp(379,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\world.cpp(603,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  wowmapview.cpp
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(122,17): warning C4858: discarding return value: This member function returns a bool indicating whether the container is empty and has no other effects. It is not useful to call this member function and discard the return value. Use the 'clear()' member function if you want to erase all elements.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(130,7): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(147,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(162,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(165,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(168,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(171,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(174,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(181,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(185,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(188,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(191,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(195,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(207,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(211,3): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\wowmapview.cpp(301,4): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  Generating Code...
+  StormLibRAD.lib(SFileOpenArchive.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
+  Generating code
+  Finished generating code
+  wowmapview.vcxproj -> C:\Users\jonas\OneDrive\Documents\Code2\Wow\tools\wowmapviewer\src\Release32\Clean\wowmapview.exe
+          1 file(s) copied.
+          1 file(s) copied.
+          1 file(s) copied.
