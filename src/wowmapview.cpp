@@ -57,13 +57,13 @@ void deleteFonts()
 	delete f32;
 }
 
-#ifdef _WINDOWS
-// HACK: my stupid compiler wont use main()
-int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	char *argv[] = { "wowmapview.exe", "-w" };
-	return main(2,argv);
-}
-#endif
+//#ifdef _WINDOWS
+//// HACK: my stupid compiler wont use main()
+//int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+//	char *argv[] = { "wowmapview.exe", "-w" };
+//	return main(2,argv);
+//}
+//#endif
 
 int main(int argc, char *argv[])
 {
@@ -122,6 +122,8 @@ int main(int argc, char *argv[])
 		gamePath.empty();
 		gamePath.append(override_game_path);
 	} else getGamePath();
+	//gamePath = "C:/Users/jonas/Downloads/cata/Data/";
+	// Use with: .\wowmapview.exe -gamepath C:/Users/jonas/Downloads/cata/Data/
 
 	char path[512];
 	const char *test_files[] = { "common.MPQ", "art.MPQ" };

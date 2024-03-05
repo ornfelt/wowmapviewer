@@ -1,0 +1,57 @@
+cmake_minimum_required(VERSION 3.10)
+
+# Set your project name and specify the C++ standard
+project(WowMapView)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# Compiler options
+add_compile_options(-D_LINUX -g)
+
+# Find packages
+find_package(SDL REQUIRED)
+find_package(OpenGL REQUIRED)
+
+# Include directories
+include_directories(. stormlib zlib libmpq ${SDL_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR})
+
+# Add the stormlib directory as a subdirectory so its CMakeLists.txt is processed
+add_subdirectory(stormlib)
+
+# Source files
+set(SOURCES
+    areadb.cpp
+    dbcfile.cpp
+    font.cpp
+    frustum.cpp
+    liquid.cpp
+    particle.cpp
+    maptile.cpp
+    menu.cpp
+    model.cpp
+    mpq_stormlib.cpp
+    shaders.cpp
+    sky.cpp
+    test.cpp
+    video.cpp
+    wmo.cpp
+    world.cpp
+    wowmapview.cpp
+    util.cpp
+)
+
+# Define the executable
+add_executable(wowmapview ${SOURCES})
+
+# Specify libraries to link against
+target_link_libraries(wowmapview
+    ${SDL_LIBRARY}
+    ${OPENGL_LIBRARIES}
+    bz2
+    stormlib
+)
+
+# Post-build copy command
+add_custom_command(TARGET wowmapview POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:wowmapview> ../../bin/
+)
