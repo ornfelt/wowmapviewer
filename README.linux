@@ -1,3 +1,15 @@
+On linux:
+
+cd src
+mkdir build && cd build
+cmake .. && make -j$(nproc)
+Usage example:
+./wowmapview -gamepath /media/2024/cata/Data/
+
+On windows:
+Use cmake with win32 and compile ALL_BUILD option...
+
+Old:
 compile stormlib with 'make -f Makefile.linux'
 then compile wowmapviewer in src/ with a plain old 'make'
 run './wowmapview -gamepath ...../Program\ Files/World\ of\ Warcraft/Data/' in bin/
