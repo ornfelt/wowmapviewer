@@ -141,6 +141,6 @@ if(MSVC)
 else()
     # Post-build copy command for non-MSVC environments
     add_custom_command(TARGET wowmapview POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:wowmapview> ${PROJECT_SOURCE_DIR}/../../bin/
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:wowmapview> ${PROJECT_SOURCE_DIR}/../bin/
     )
 endif()

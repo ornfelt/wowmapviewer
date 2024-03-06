@@ -7,15 +7,14 @@ project(stormlib)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Compiler options
-add_definitions(-D__SYS_ZLIB -D_7ZIP_ST -DWIN32 -D_WINDOWS -D_USRDLL)
-
 # Usage to toggle between using static or dynamic runtime libraries:
 # cmake -DUSE_MT=ON ..
 # cmake -DUSE_MT=OFF ..
 option(USE_MT "Use static runtime library (/MT, /MTd)" ON)
 
+# Compiler options
 if(MSVC)
+  add_definitions(-D__SYS_ZLIB -D_7ZIP_ST -DWIN32 -D_WINDOWS -D_USRDLL)
   # MSVC specific flags
   add_compile_options(/W1)
   add_definitions(-D_WINDOWS -D_USRDLL)
