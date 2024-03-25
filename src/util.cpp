@@ -23,6 +23,7 @@ void check_stuff() {
 }
 void gLog(const char *str, ...)
 {
+#if USE_LOG
 	if (glogfirst) {
 		flog = fopen("log.txt","w");
 		fclose(flog);
@@ -42,6 +43,7 @@ void gLog(const char *str, ...)
 	va_end(ap);
 
 	fclose(flog);
+#endif
 };
 
 int file_exists(char *path)

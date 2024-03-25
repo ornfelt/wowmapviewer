@@ -8,6 +8,8 @@ Usage example:
 
 On windows:
 Use cmake with win32 and compile ALL_BUILD option...
+In: build\Release
+.\wowmapview.exe -gamepath "D:\2024\cata\Data\"
 
 Old:
 compile stormlib with 'make -f Makefile.linux'

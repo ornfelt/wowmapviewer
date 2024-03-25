@@ -1,6 +1,23 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#define USE_LOG 0
+//#define NO_PRINT
+
+// Macro for conditional printing
+// Usage - disable in code or do:
+// g++ -DNO_PRINT -o myprogram myprogram.cpp
+// Or, if using MSVC
+// cl /DNO_PRINT myprogram.cpp /o myprogram.exe
+// With cmake:
+// cmake -DNO_PRINT=ON ..
+#ifdef NO_PRINT
+#define DEBUG_PRINT(...) (void)0
+#else
+#include <cstdio>
+#define DEBUG_PRINT(...) printf(__VA_ARGS__)
+#endif
+
 #include <algorithm>
 #include <cctype>
 #include <string>

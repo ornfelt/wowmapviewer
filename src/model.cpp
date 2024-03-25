@@ -8,6 +8,21 @@ int globalTime = 0;
 
 Model::Model(std::string name, bool forceAnim) : ManagedItem(name), forceAnim(forceAnim)
 {
+	// Test (see models south of pvpzone01)
+	if (name == "World\\Azeroth\\Burningsteppes\\Passivedoodads\\Orctoolrackburningsteppes\\Orctoolrackburningsteppes.Mdx"
+		|| name == "World\\Azeroth\\Westfall\\Passivedoodads\\Lamppost\\Westfalllamppost02.Mdx"
+		|| name == "World\\Generic\\Passivedoodads\\Particleemitters\\Blacksmith_Smoke.Mdx"
+		|| name == "World\\Generic\\Ogre\\Passive Doodads\\Torches\\Ogrewalltorchred.M2"
+		|| name == "World\\Generic\\Orc\\Passive Doodads\\Voodoostuff\\Bubblingbowl01.M2")
+	{
+		DEBUG_PRINT("Loading model %s%s\n", name);
+		//name = "spells\\blizzard_impact_base.m2";
+		//name = "character\\human\\male\\humanmale.m2";
+		//name = "creature\\bloodelfmalekid\\bloodelfmalekid.m2";
+		//name = "creature\\undeaddrake\\undeaddrake.m2";
+		name = "creature\\illidan\\illidan.m2";
+	}
+
 	if (name == "")
 		return;
 	// replace .MDX with .M2
@@ -41,6 +56,7 @@ Model::Model(std::string name, bool forceAnim) : ManagedItem(name), forceAnim(fo
 	animated = isAnimated(f) || forceAnim;  // isAnimated will set animGeometry and animTextures
 
 	gLog("Loading model %s%s\n", tempname, animated ? " (animated)" : "");
+	//DEBUG_PRINT("Loading model %s%s\n", tempname, animated ? " (animated)" : "");
 
 	// Initiate our model variables.
 	trans = 1.0f;

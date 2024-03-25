@@ -580,12 +580,16 @@ if (MSVC)
 	# Handling Module Definition Files for DLLs
 	set_target_properties(stormlib PROPERTIES
 		WINDOWS_EXPORT_ALL_SYMBOLS TRUE
-		LINK_FLAGS "/DEF:${CMAKE_SOURCE_DIR}/stormlib_dll/StormLib.def"
+		#LINK_FLAGS "/DEF:${CMAKE_SOURCE_DIR}/stormlib_dll/StormLib.def"
+		# Required for paths with spaces in them...
+		LINK_FLAGS "/DEF:\"${CMAKE_SOURCE_DIR}/stormlib_dll/StormLib.def\""
 	)
   
 	set_target_properties(stormlib_static PROPERTIES
 		WINDOWS_EXPORT_ALL_SYMBOLS TRUE
-		LINK_FLAGS "/DEF:${CMAKE_SOURCE_DIR}/stormlib_dll/StormLib.def"
+		#LINK_FLAGS "/DEF:${CMAKE_SOURCE_DIR}/stormlib_dll/StormLib.def"
+		# Required for paths with spaces in them...
+		LINK_FLAGS "/DEF:\"${CMAKE_SOURCE_DIR}/stormlib_dll/StormLib.def\""
 	)
 	
 else()

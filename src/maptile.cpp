@@ -319,12 +319,14 @@ void MapTile::parse_adt(char *name,bool mcnk_has_header,load_phases phase) {
 		if (strncmp(fourcc, "MVER", 4) == 0) {
 			__int32 version;
 			f.read(&version,4);
-			printf("adt version %d\n",version);
+			//printf("adt version %d\n",version);
+			DEBUG_PRINT("adt version %d\n",version);
 		}
 		else if (strncmp(fourcc, "MHDR", 4) == 0) {
 		}
 		else if (strncmp(fourcc,"MCIN",4)==0) {
-			printf("MCIN chunk!!!\n");
+			//printf("MCIN chunk!!!\n");
+			DEBUG_PRINT("MCIN chunk!!!\n");
 			/*
 			Index for MCNK chunks. Contains 256 records of 16 bytes, which have the following format:
 			struct SMChunkInfo // 03-29-2005 By ObscuR
@@ -540,7 +542,8 @@ void MapTile::parse_adt(char *name,bool mcnk_has_header,load_phases phase) {
 				mh2oh = (struct WaterTile *)abuf;
 				//
 				// start at 3072, 3072+24, 3072+24*2, ....
-				printf( "%d MH2O: %X, %X %d %X", i,
+				//printf( "%d MH2O: %X, %X %d %X", i,
+				DEBUG_PRINT( "%d MH2O: %X, %X %d %X", i,
 					abuf - f.getPointer(),
 					0x86fa + mh2oh->ofsLayer,
 					mh2oh->layerCount,
@@ -572,7 +575,8 @@ void MapTile::parse_adt(char *name,bool mcnk_has_header,load_phases phase) {
 					while( false );
 					}*/
 
-					printf( " Layer %d: %d %d %f-%f %d-%d-%d-%d %X-%X", j,
+					//printf( " Layer %d: %d %d %f-%f %d-%d-%d-%d %X-%X", j,
+					DEBUG_PRINT( " Layer %d: %d %d %f-%f %d-%d-%d-%d %X-%X", j,
 						mh2oi->flags,
 						mh2oi->type, 
 						mh2oi->min,
@@ -637,7 +641,8 @@ void MapTile::parse_adt(char *name,bool mcnk_has_header,load_phases phase) {
 
 					chunks[i/CHUNKS_IN_TILE][i%CHUNKS_IN_TILE].waterLayer.push_back( waterLayer );
 				}
-				printf( "\n");
+				//printf( "\n");
+				DEBUG_PRINT( "\n");
 				abuf += sizeof(struct WaterTile);
 
 				//Water.push_back( waterTile );

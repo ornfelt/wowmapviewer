@@ -28,6 +28,18 @@ else()
     add_compile_options(-D_LINUX -g)
 endif()
 
+# Use DEBUG_PRINT?
+if(NO_PRINT)
+    add_compile_definitions(NO_PRINT)
+endif()
+
+# Global optimizations
+add_compile_options(-O2)
+# Target specific optimization
+#target_compile_options(wowmapview PRIVATE -O2)
+# Build Type Specific optimization flag...
+#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
+
 # Find packages
 if (NOT MSVC)
 	find_package(SDL REQUIRED)
@@ -53,29 +65,58 @@ endif()
 add_subdirectory(stormlib)
 
 # Source files
-set(SOURCES
-    areadb.cpp
-    dbcfile.cpp
-    font.cpp
-    frustum.cpp
-    liquid.cpp
-    particle.cpp
-    maptile.cpp
-    menu.cpp
-    model.cpp
-    mpq_stormlib.cpp
-    shaders.cpp
-    sky.cpp
-    test.cpp
-    video.cpp
-    wmo.cpp
-    world.cpp
-    wowmapview.cpp
-    util.cpp
-)
+#set(SOURCES
+#    areadb.cpp
+#    dbcfile.cpp
+#    font.cpp
+#    frustum.cpp
+#    liquid.cpp
+#    particle.cpp
+#    maptile.cpp
+#    menu.cpp
+#    model.cpp
+#    mpq_stormlib.cpp
+#    shaders.cpp
+#    sky.cpp
+#    test.cpp
+#    video.cpp
+#    wmo.cpp
+#    world.cpp
+#    wowmapview.cpp
+#    util.cpp
+#)
+#
+#set(HEADERS
+#    areadb.h
+#    dbcfile.h
+#    font.h
+#    frustum.h
+#    liquid.h
+#    particle.h
+#    maptile.h
+#    menu.h
+#    model.h
+#    mpq_stormlib.h
+#    shaders.h
+#    sky.h
+#    test.h
+#    video.h
+#    wmo.h
+#    world.h
+#    wowmapview.h
+#    util.h
+#)
+
+#file(GLOB_RECURSE HEADERS "*.h")
+#file(GLOB_RECURSE SOURCES "*.cpp")
+file(GLOB HEADERS "*.h")
+file(GLOB SOURCES "*.cpp")
+list(REMOVE_ITEM SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/dbclister.cpp")
 
 # Define the executable
-add_executable(wowmapview ${SOURCES})
+#add_executable(wowmapview ${SOURCES})
+add_executable(wowmapview ${SOURCES} ${HEADERS})
+
 
 # Ensure stormlib is built before wowmapview
 add_dependencies(wowmapview stormlib)
