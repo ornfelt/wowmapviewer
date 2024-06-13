@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -57,6 +57,12 @@ static SDLKey ODD_keymap[256];
 static SDLKey MISC_keymap[256];
 SDLKey X11_TranslateKeycode(Display *display, KeyCode kc);
 
+/*
+ Pending resize target for ConfigureNotify (so outdated events don't
+ cause inappropriate resize events)
+*/
+int X11_PendingConfigureNotifyWidth = -1;
+int X11_PendingConfigureNotifyHeight = -1;
 
 #ifdef X_HAVE_UTF8_STRING
 Uint32 Utf8ToUcs4(const Uint8 *utf8)
@@ -389,6 +395,8 @@ static int X11_DispatchEvent(_THIS)
 {
 	int posted;
 	XEvent xevent;
+	int orig_event_type;
+	KeyCode orig_keycode;
 
 	SDL_memset(&xevent, '\0', sizeof (XEvent));  /* valgrind fix. --ryan. */
 	XNextEvent(SDL_Display, &xevent);
@@ -404,9 +412,29 @@ static int X11_DispatchEvent(_THIS)
 #ifdef X_HAVE_UTF8_STRING
 	/* If we are translating with IM, we need to pass all events
 	   to XFilterEvent, and discard those filtered events immediately.  */
+	orig_event_type = xevent.type;
+	if (orig_event_type == KeyPress || orig_event_type == KeyRelease) {
+	     orig_keycode = xevent.xkey.keycode;
+	} else {
+	     orig_keycode = 0;
+	}
 	if ( SDL_TranslateUNICODE
 	     && SDL_IM != NULL
 	     && XFilterEvent(&xevent, None) ) {
+	        if (orig_keycode) {
+	            SDL_keysym keysym;
+	            static XComposeStatus state;
+	            char keybuf[32];
+
+	            keysym.scancode = xevent.xkey.keycode;
+	            keysym.sym = X11_TranslateKeycode(SDL_Display, xevent.xkey.keycode);
+	            keysym.mod = KMOD_NONE;
+	            keysym.unicode = 0;
+	            if (orig_event_type == KeyPress && XLookupString(&xevent.xkey, keybuf, sizeof(keybuf), NULL, &state))
+	                keysym.unicode = (Uint8)keybuf[0];
+
+	            SDL_PrivateKeyboard(orig_event_type == KeyPress ? SDL_PRESSED : SDL_RELEASED, &keysym);
+	        }
 		return 0;
 	}
 #endif
@@ -441,8 +469,10 @@ printf("Mode: NotifyGrab\n");
 if ( xevent.xcrossing.mode == NotifyUngrab )
 printf("Mode: NotifyUngrab\n");
 #endif
-		if ( xevent.xcrossing.detail != NotifyInferior ) {
-			if ( this->input_grab == SDL_GRAB_OFF ) {
+		if ( (xevent.xcrossing.mode != NotifyGrab) &&
+		     (xevent.xcrossing.mode != NotifyUngrab) &&
+		     (xevent.xcrossing.detail != NotifyInferior) ) {
+               		if ( this->input_grab == SDL_GRAB_OFF ) {
 				posted = SDL_PrivateAppActive(0, SDL_APPMOUSEFOCUS);
 			} else {
 				posted = SDL_PrivateMouseMotion(0, 0,
@@ -455,6 +485,13 @@ printf("Mode: NotifyUngrab\n");
 
 	    /* Gaining input focus? */
 	    case FocusIn: {
+	    if (xevent.xfocus.mode == NotifyGrab || xevent.xfocus.mode == NotifyUngrab) {
+		/* Someone is handling a global hotkey, ignore it */
+#ifdef DEBUG_XEVENTS
+		printf("FocusIn (NotifyGrab/NotifyUngrab, ignoring)\n");
+#endif
+		break;
+	    }
 #ifdef DEBUG_XEVENTS
 printf("FocusIn!\n");
 #endif
@@ -473,6 +510,13 @@ printf("FocusIn!\n");
 
 	    /* Losing input focus? */
 	    case FocusOut: {
+	    if (xevent.xfocus.mode == NotifyGrab || xevent.xfocus.mode == NotifyUngrab) {
+		/* Someone is handling a global hotkey, ignore it */
+#ifdef DEBUG_XEVENTS
+		printf("FocusOut (NotifyGrab/NotifyUngrab, ignoring)\n");
+#endif
+		break;
+	    }
 #ifdef DEBUG_XEVENTS
 printf("FocusOut!\n");
 #endif
@@ -817,6 +861,16 @@ printf("MapNotify!\n");
 #ifdef DEBUG_XEVENTS
 printf("ConfigureNotify! (resize: %dx%d)\n", xevent.xconfigure.width, xevent.xconfigure.height);
 #endif
+		if ((X11_PendingConfigureNotifyWidth != -1) &&
+		    (X11_PendingConfigureNotifyHeight != -1)) {
+		    if ((xevent.xconfigure.width == X11_PendingConfigureNotifyWidth) &&
+			(xevent.xconfigure.height == X11_PendingConfigureNotifyHeight)) {
+			    /* Event is from before the resize, so ignore. */
+			    break;
+		    }
+		    X11_PendingConfigureNotifyWidth = -1;
+		    X11_PendingConfigureNotifyHeight = -1;
+		}
 		if ( SDL_VideoSurface ) {
 		    if ((xevent.xconfigure.width != SDL_VideoSurface->w) ||
 		        (xevent.xconfigure.height != SDL_VideoSurface->h)) {
@@ -1228,14 +1282,23 @@ static void get_modifier_masks(Display *display)
  * sequences (dead accents, compose key sequences) will not work since the
  * state has been irrevocably lost.
  */
+extern DECLSPEC Uint16 SDLCALL X11_KeyToUnicode(SDLKey, SDLMod);
+
 Uint16 X11_KeyToUnicode(SDLKey keysym, SDLMod modifiers)
 {
+	static int warning = 0;
 	struct SDL_VideoDevice *this = current_video;
 	char keybuf[32];
 	int i;
 	KeySym xsym = 0;
 	XKeyEvent xkey;
 	Uint16 unicode;
+
+	if ( warning ) {
+		warning = 0;
+		fprintf(stderr, "WARNING: Application is using X11_KeyToUnicode().\n");
+		fprintf(stderr, "This is not an official SDL function, please report this as a bug.\n");
+	}
 
 	if ( !this || !SDL_Display ) {
 		return 0;

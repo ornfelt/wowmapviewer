@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,7 @@
 #include "../SDL_cursor_c.h"
 #include "SDL_gemmouse_c.h"
 #include "SDL_gemvideo.h"
+#include "../ataricommon/SDL_xbiosevents_c.h"
 
 /* Defines */
 
@@ -50,8 +51,9 @@ void GEM_FreeWMCursor(_THIS, WMcursor *cursor)
 
 	if (cursor == NULL)
 		return;
-	
+
 	graf_mouse(ARROW, NULL);
+	GEM_prev_cursor = NULL;
 
 	if (cursor->mform_p != NULL)
 		SDL_free(cursor->mform_p);
@@ -87,7 +89,7 @@ WMcursor *GEM_CreateWMCursor(_THIS,
 	}
 
 	/* Allocate mform */
-	new_mform = (MFORM *)SDL_malloc(sizeof(MFORM));		
+	new_mform = (MFORM *)SDL_malloc(sizeof(MFORM));
 	if (new_mform == NULL) {
 		SDL_free(cursor);
 		SDL_OutOfMemory();
@@ -156,8 +158,8 @@ void GEM_WarpWMCursor(_THIS, Uint16 x, Uint16 y)
 	/* This seems to work only on AES 3.4 (Falcon) */
 
 	EVNTREC	warpevent;
-	
-	warpevent.ap_event = APPEVNT_MOUSE; 
+
+	warpevent.ap_event = APPEVNT_MOUSE;
 	warpevent.ap_value = (x << 16) | y;
 
 	appl_tplay(&warpevent, 1, 1000);
@@ -167,7 +169,8 @@ void GEM_WarpWMCursor(_THIS, Uint16 x, Uint16 y)
 void GEM_CheckMouseMode(_THIS)
 {
 	const Uint8 full_focus = (SDL_APPACTIVE|SDL_APPINPUTFOCUS|SDL_APPMOUSEFOCUS);
-	int set_system_cursor = 1, show_system_cursor = 1;
+	int set_system_cursor = 1;
+	SDL_bool hide_system_cursor = SDL_FALSE;
 
 #ifdef DEBUG_VIDEO_GEM
 	printf("sdl:video:gem: check mouse mode\n");
@@ -183,22 +186,30 @@ void GEM_CheckMouseMode(_THIS)
 		/* Application defined cursor only over the application window */
 		if ((SDL_GetAppState() & full_focus) == full_focus) {
 			if (GEM_cursor) {
-				graf_mouse(USER_DEF, GEM_cursor->mform_p);
+				if (GEM_cursor != GEM_prev_cursor) {
+					graf_mouse(USER_DEF, GEM_cursor->mform_p);
+					GEM_prev_cursor = GEM_cursor;
+				}
 				set_system_cursor = 0;
 			} else {
-				show_system_cursor = 0;
+				hide_system_cursor = SDL_TRUE;
 			}
 		}
 	} else {
 		/* Mouse cursor hidden only over the application window */
 		if ((SDL_GetAppState() & full_focus) == full_focus) {
 			set_system_cursor = 0;
-			show_system_cursor = 0;
+			hide_system_cursor = SDL_TRUE;
 		}
 	}
 
-	graf_mouse(show_system_cursor ? M_ON : M_OFF, NULL);
-	if (set_system_cursor) {
+	if (hide_system_cursor != GEM_cursor_hidden) {
+		graf_mouse(hide_system_cursor ? M_OFF : M_ON, NULL);
+		GEM_cursor_hidden = hide_system_cursor;
+	}
+
+	if (set_system_cursor && GEM_prev_cursor) {
 		graf_mouse(ARROW, NULL);
+		GEM_prev_cursor = NULL;
 	}
 }

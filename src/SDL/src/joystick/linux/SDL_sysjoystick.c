@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@
 
 /* This is the system specific header for the SDL joystick API */
 
+#include <math.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -290,7 +291,8 @@ struct joystick_hwdata {
 	Uint8 abs_map[ABS_MAX];
 	struct axis_correct {
 		int used;
-		int coef[3];
+		int minimum;
+		int maximum;
 	} abs_correct[ABS_MAX];
 #endif
 };
@@ -389,7 +391,8 @@ static int EV_IsJoystick(int fd)
 		return(0);
 	}
 	if (!(test_bit(EV_KEY, evbit) && test_bit(EV_ABS, evbit) &&
-	      test_bit(ABS_X, absbit) && test_bit(ABS_Y, absbit) &&
+	     ((test_bit(ABS_X, absbit) && test_bit(ABS_Y, absbit)) ||
+		  (test_bit(ABS_HAT0X, absbit) && test_bit(ABS_HAT0Y, absbit))) &&
 	     (test_bit(BTN_TRIGGER, keybit) || test_bit(BTN_A, keybit) || test_bit(BTN_1, keybit)))) return 0;
 	return(1);
 }
@@ -417,21 +420,31 @@ int SDL_SYS_JoystickInit(void)
 
 	numjoysticks = 0;
 
-	/* First see if the user specified a joystick to use */
+	/* First see if the user specified one or more joysticks to use */
 	if ( SDL_getenv("SDL_JOYSTICK_DEVICE") != NULL ) {
-		SDL_strlcpy(path, SDL_getenv("SDL_JOYSTICK_DEVICE"), sizeof(path));
-		if ( stat(path, &sb) == 0 ) {
-			fd = open(path, O_RDONLY, 0);
-			if ( fd >= 0 ) {
-				/* Assume the user knows what they're doing. */
-				SDL_joylist[numjoysticks].fname = SDL_strdup(path);
-				if ( SDL_joylist[numjoysticks].fname ) {
-					dev_nums[numjoysticks] = sb.st_rdev;
-					++numjoysticks;
-				}
-				close(fd);
+		char *envcopy, *envpath, *delim;
+		envcopy = SDL_strdup(SDL_getenv("SDL_JOYSTICK_DEVICE"));
+		envpath = envcopy;
+		while ( envpath != NULL ) {
+			delim = SDL_strchr(envpath, ':');
+			if ( delim != NULL ) {
+				*delim++ = '\0';
 			}
+			if ( stat(envpath, &sb) == 0 ) {
+				fd = open(envpath, O_RDONLY, 0);
+				if ( fd >= 0 ) {
+					/* Assume the user knows what they're doing. */
+					SDL_joylist[numjoysticks].fname = SDL_strdup(envpath);
+					if ( SDL_joylist[numjoysticks].fname ) {
+						dev_nums[numjoysticks] = sb.st_rdev;
+						++numjoysticks;
+					}
+					close(fd);
+				}
+			}
+			envpath = delim;
 		}
+		SDL_free(envcopy);
 	}
 
 	for ( i=0; i<SDL_arraysize(joydev_pattern); ++i ) {
@@ -571,8 +584,8 @@ static SDL_bool JS_ConfigJoystick(SDL_Joystick *joystick, int fd)
 {
 	SDL_bool handled;
 	unsigned char n;
-	int old_axes, tmp_naxes, tmp_nhats, tmp_nballs;
-	const char *name;
+	int tmp_naxes, tmp_nhats, tmp_nballs;
+	const char *name, *ptr;
 	char *env, env_name[128];
 	int i;
 
@@ -591,11 +604,11 @@ static SDL_bool JS_ConfigJoystick(SDL_Joystick *joystick, int fd)
 	}
 
 	name = SDL_SYS_JoystickName(joystick->index);
-	old_axes = joystick->naxes;
 
 	/* Generic analog joystick support */
-	if ( SDL_strstr(name, "Analog") == name && SDL_strstr(name, "-hat") ) {
-		if ( SDL_sscanf(name,"Analog %d-axis %*d-button %d-hat",
+	ptr = SDL_strstr(name, "Analog");
+	if ( ptr != NULL && SDL_strstr(ptr, "-hat") ) {
+		if ( SDL_sscanf(ptr,"Analog %d-axis %*d-button %d-hat",
 			&tmp_naxes, &tmp_nhats) == 2 ) {
 
 			joystick->naxes = tmp_naxes;
@@ -661,7 +674,7 @@ static SDL_bool JS_ConfigJoystick(SDL_Joystick *joystick, int fd)
 
 static SDL_bool EV_ConfigJoystick(SDL_Joystick *joystick, int fd)
 {
-	int i, t;
+	int i;
 	unsigned long keybit[NBITS(KEY_MAX)] = { 0 };
 	unsigned long absbit[NBITS(ABS_MAX)] = { 0 };
 	unsigned long relbit[NBITS(REL_MAX)] = { 0 };
@@ -693,38 +706,30 @@ static SDL_bool EV_ConfigJoystick(SDL_Joystick *joystick, int fd)
 				++joystick->nbuttons;
 			}
 		}
-		for ( i=0; i<ABS_MAX; ++i ) {
+		for ( i=0; i<ABS_MISC; ++i ) {
 			/* Skip hats */
 			if ( i == ABS_HAT0X ) {
 				i = ABS_HAT3Y;
 				continue;
 			}
 			if ( test_bit(i, absbit) ) {
-				int values[5];
+				struct input_absinfo absinfo;
 
-				if ( ioctl(fd, EVIOCGABS(i), values) < 0 )
+				if ( ioctl(fd, EVIOCGABS(i), &absinfo) < 0 )
 					continue;
 #ifdef DEBUG_INPUT_EVENTS
 				printf("Joystick has absolute axis: %x\n", i);
 				printf("Values = { %d, %d, %d, %d, %d }\n",
-					values[0], values[1],
-					values[2], values[3], values[4]);
+					absinfo.value, absinfo.minimum,
+					absinfo.maximum, absinfo.fuzz, absinfo.flat);
 #endif /* DEBUG_INPUT_EVENTS */
 				joystick->hwdata->abs_map[i] = joystick->naxes;
-				if ( values[1] == values[2] ) {
+				if ( absinfo.minimum == absinfo.maximum ) {
 				    joystick->hwdata->abs_correct[i].used = 0;
 				} else {
 				    joystick->hwdata->abs_correct[i].used = 1;
-				    joystick->hwdata->abs_correct[i].coef[0] =
-					(values[2] + values[1]) / 2 - values[4];
-				    joystick->hwdata->abs_correct[i].coef[1] =
-					(values[2] + values[1]) / 2 + values[4];
-				    t = ((values[2] - values[1]) / 2 - 2 * values[4]);
-				    if ( t != 0 ) {
-					joystick->hwdata->abs_correct[i].coef[2] = (1 << 29) / t;
-				    } else {
-					joystick->hwdata->abs_correct[i].coef[2] = 0;
-				    }
+				    joystick->hwdata->abs_correct[i].minimum = absinfo.minimum;
+				    joystick->hwdata->abs_correct[i].maximum = absinfo.maximum;
 				}
 				++joystick->naxes;
 			}
@@ -817,6 +822,9 @@ int SDL_SYS_JoystickOpen(SDL_Joystick *joystick)
 		return(-1);
 	}
 	SDL_memset(joystick->hwdata, 0, sizeof(*joystick->hwdata));
+#if SDL_INPUT_LINUXEV
+	SDL_memset(joystick->hwdata->abs_map, ABS_MAX, sizeof(*joystick->hwdata->abs_map)*ABS_MAX);
+#endif
 	joystick->hwdata->fd = fd;
 
 	/* Set the joystick to non-blocking read mode */
@@ -926,6 +934,10 @@ void HandleHat(SDL_Joystick *stick, Uint8 hat, int axis, int value)
 	SDL_logical_joydecl(SDL_Joystick *logicaljoy = NULL);
 	SDL_logical_joydecl(struct joystick_logical_mapping* hats = NULL);
 
+	if (stick->nhats <= hat) {
+		return;  /* whoops, that shouldn't happen! */
+	}
+
 	the_hat = &stick->hwdata->hats[hat];
 	if ( value < 0 ) {
 		value = 0;
@@ -964,6 +976,9 @@ void HandleHat(SDL_Joystick *stick, Uint8 hat, int axis, int value)
 static __inline__
 void HandleBall(SDL_Joystick *stick, Uint8 ball, int axis, int value)
 {
+	if ((stick->nballs <= ball) || (axis >= 2)) {
+		return;  /* whoops, that shouldn't happen! */
+	}
 	stick->hwdata->balls[ball].axis[axis] += value;
 }
 
@@ -1039,16 +1054,18 @@ static __inline__ int EV_AxisCorrect(SDL_Joystick *joystick, int which, int valu
 
 	correct = &joystick->hwdata->abs_correct[which];
 	if ( correct->used ) {
-		if ( value > correct->coef[0] ) {
-			if ( value < correct->coef[1] ) {
-				return 0;
-			}
-			value -= correct->coef[1];
-		} else {
-			value -= correct->coef[0];
-		}
-		value *= correct->coef[2];
-		value >>= 14;
+		const int original_value = value;
+		const float ideal_minimum = -32768;
+		const float ideal_maximum = +32767;
+		const float ideal_range = ideal_maximum - ideal_minimum;
+		const float actual_range = (correct->maximum - correct->minimum);
+		const float coefficient = ideal_range / actual_range;
+		const float new_float = (original_value - correct->minimum) * coefficient + ideal_minimum;
+		const int new_integer = round(new_float);
+		/*
+		if (which == 0) printf("Axis %d: old=%+6d new=%+6d\n", which, value, new_integer);
+		*/
+		value = new_integer;
 	}
 
 	/* Clamp and return */
@@ -1090,6 +1107,9 @@ static __inline__ void EV_HandleEvents(SDL_Joystick *joystick)
 				}
 				break;
 			    case EV_ABS:
+				if (code >= ABS_MISC) {
+					break;
+				}
 				switch (code) {
 				    case ABS_HAT0X:
 				    case ABS_HAT0Y:
@@ -1104,15 +1124,17 @@ static __inline__ void EV_HandleEvents(SDL_Joystick *joystick)
 							events[i].value);
 					break;
 				    default:
-					events[i].value = EV_AxisCorrect(joystick, code, events[i].value);
+					if (joystick->hwdata->abs_map[code] != ABS_MAX ) {
+					  events[i].value = EV_AxisCorrect(joystick, code, events[i].value);
 #ifndef NO_LOGICAL_JOYSTICKS
-					if (!LogicalJoystickAxis(joystick,
+					  if (!LogicalJoystickAxis(joystick,
 				           joystick->hwdata->abs_map[code],
 					   events[i].value))
 #endif
-					SDL_PrivateJoystickAxis(joystick,
+					  SDL_PrivateJoystickAxis(joystick,
 				           joystick->hwdata->abs_map[code],
 					   events[i].value);
+					}
 					break;
 				}
 				break;

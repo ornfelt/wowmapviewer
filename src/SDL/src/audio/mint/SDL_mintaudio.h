@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -48,15 +48,25 @@ typedef struct {
 
 struct SDL_PrivateAudioData {
 	mint_frequency_t	frequencies[MINTAUDIO_maxfreqs];
-	int 	freq_count;		/* Number of frequencies in the array */
-	int		numfreq;		/* Number of selected frequency */
+	int	freq_count;	/* Number of frequencies in the array */
+	int	numfreq;	/* Number of selected frequency */
+
+	Uint8	*audiobuf[2];	/* DMA buffers */
+	Uint8	*fastrambuf;	/* Intermediate buffer to be filled by application */
+	int	audiosize;	/* and their size, variable depending on latency */
+
+	void (*swapbuf)(Uint8 *nextbuf, int nextsize);	/* Routine to swap DMA buffers */
 };
 
 /* Old variable names */
 
 #define MINTAUDIO_frequencies	(this->hidden->frequencies)
-#define MINTAUDIO_freqcount		(this->hidden->freq_count)
-#define MINTAUDIO_numfreq		(this->hidden->numfreq)
+#define MINTAUDIO_freqcount	(this->hidden->freq_count)
+#define MINTAUDIO_numfreq	(this->hidden->numfreq)
+#define MINTAUDIO_swapbuf	(this->hidden->swapbuf)
+#define MINTAUDIO_audiobuf	(this->hidden->audiobuf)
+#define MINTAUDIO_fastrambuf	(this->hidden->fastrambuf)
+#define MINTAUDIO_audiosize	(this->hidden->audiosize)
 
 /* _MCH cookie (values>>16) */
 enum {
@@ -83,51 +93,8 @@ enum {
 #define MASTERPREDIV_FALCON	256
 #define MASTERPREDIV_MILAN	256
 
-/* MFP 68901 interrupt sources */
-#ifndef MFP_PARALLEL
-enum {
-	MFP_PARALLEL=0,
-	MFP_DCD,
-	MFP_CTS,
-	MFP_BITBLT,
-	MFP_TIMERD,
-	MFP_BAUDRATE=MFP_TIMERD,
-	MFP_TIMERC,
-	MFP_200HZ=MFP_TIMERC,
-	MFP_ACIA,
-	MFP_DISK,
-	MFP_TIMERB,
-	MFP_HBLANK=MFP_TIMERB,
-	MFP_TERR,
-	MFP_TBE,
-	MFP_RERR,
-	MFP_RBF,
-	MFP_TIMERA,
-	MFP_DMASOUND=MFP_TIMERA,
-	MFP_RING,
-	MFP_MONODETECT
-};
-#endif
-
-/* Xbtimer() timers */
-#ifndef XB_TIMERA
-enum {
-	XB_TIMERA=0,
-	XB_TIMERB,
-	XB_TIMERC,
-	XB_TIMERD
-};
-#endif
-
 /* Variables */
 extern SDL_AudioDevice *SDL_MintAudio_device;
-extern Uint8 *SDL_MintAudio_audiobuf[2];	/* Pointers to buffers */
-extern unsigned long SDL_MintAudio_audiosize;		/* Length of audio buffer=spec->size */
-extern volatile unsigned short SDL_MintAudio_numbuf;		/* Buffer to play */
-extern volatile unsigned short SDL_MintAudio_mutex;
-extern cookie_stfa_t *SDL_MintAudio_stfa;
-extern volatile unsigned long SDL_MintAudio_clocktics;
-extern unsigned short SDL_MintAudio_hasfpu;	/* To preserve fpu registers if needed */
 
 /* MiNT thread variables */
 extern SDL_bool	SDL_MintAudio_mint_present;
@@ -136,19 +103,29 @@ extern SDL_bool SDL_MintAudio_thread_finished;
 extern long SDL_MintAudio_thread_pid;
 
 /* Functions */
-void SDL_MintAudio_Callback(void);
+void SDL_AtariMint_UpdateAudio(void);
+
+int SDL_MintAudio_InitBuffers(SDL_AudioSpec *spec);
+void SDL_MintAudio_FreeBuffers(void);
 void SDL_MintAudio_AddFrequency(_THIS, Uint32 frequency, Uint32 clock,
 	Uint32 prediv, int gpio_bits);
 int SDL_MintAudio_SearchFrequency(_THIS, int desired_freq);
-void SDL_MintAudio_CheckFpu(void);
 
 /* MiNT thread functions */
 int SDL_MintAudio_Thread(long param);
 void SDL_MintAudio_WaitThread(void);
 
-/* ASM interrupt functions */
-void SDL_MintAudio_GsxbInterrupt(void);
-void SDL_MintAudio_EmptyGsxbInterrupt(void);
+/*--- SDL_mintaudio_it.S stuff ---*/
+
+/* Variables */
+extern volatile unsigned long SDL_MintAudio_clocktics;
+extern volatile unsigned long SDL_MintAudio_num_its;
+
+extern volatile void *SDL_MintAudio_itbuffer;
+extern volatile unsigned long SDL_MintAudio_itbuflen;
+extern volatile unsigned long SDL_MintAudio_itsilence;
+
+/* Functions */
 void SDL_MintAudio_XbiosInterruptMeasureClock(void);
 void SDL_MintAudio_XbiosInterrupt(void);
 void SDL_MintAudio_Dma8Interrupt(void);

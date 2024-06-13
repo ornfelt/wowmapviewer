@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -39,8 +39,6 @@
 #include "../SDL_audio_c.h"
 #include "../SDL_sysaudio.h"
 
-#include "../../video/ataricommon/SDL_atarimxalloc_c.h"
-
 #include "SDL_mintaudio.h"
 #include "SDL_mintaudio_mcsn.h"
 
@@ -61,7 +59,7 @@
 
 /*--- Static variables ---*/
 
-static unsigned long cookie_snd, cookie_mch;
+static long cookie_snd, cookie_mch;
 static cookie_mcsn_t *cookie_mcsn;
 
 /*--- Audio driver functions ---*/
@@ -74,12 +72,13 @@ static void Mint_UnlockAudio(_THIS);
 /* To check/init hardware audio */
 static int Mint_CheckAudio(_THIS, SDL_AudioSpec *spec);
 static void Mint_InitAudio(_THIS, SDL_AudioSpec *spec);
+static void Mint_SwapBuffers(Uint8 *nextbuf, int nextsize);
 
 /*--- Audio driver bootstrap functions ---*/
 
 static int Audio_Available(void)
 {
-	unsigned long dummy;
+	long dummy;
 	const char *envr = SDL_getenv("SDL_AUDIODRIVER");
 
 	SDL_MintAudio_mint_present = (Getcookie(C_MiNT, &dummy) == C_FOUND);
@@ -112,10 +111,11 @@ static int Audio_Available(void)
 	}
 
 	/* Cookie MCSN present ? */
-	if (Getcookie(C_McSn, (long *) &cookie_mcsn) != C_FOUND) {
+	if (Getcookie(C_McSn, &dummy) != C_FOUND) {
 		DEBUG_PRINT((DEBUG_NAME "no MCSN audio\n"));
 		return(0);
 	}
+	cookie_mcsn = (cookie_mcsn_t *) dummy;
 
 	/* Check if interrupt at end of replay */
 	if (cookie_mcsn->pint == 0) {
@@ -199,15 +199,7 @@ static void Mint_CloseAudio(_THIS)
 		Jdisint(MFP_DMASOUND);
 	}
 
-	/* Wait if currently playing sound */
-	while (SDL_MintAudio_mutex != 0) {
-	}
-
-	/* Clear buffers */
-	if (SDL_MintAudio_audiobuf[0]) {
-		Mfree(SDL_MintAudio_audiobuf[0]);
-		SDL_MintAudio_audiobuf[0] = SDL_MintAudio_audiobuf[1] = NULL;
-	}
+	SDL_MintAudio_FreeBuffers();
 
 	/* Unlock sound system */
 	Unlocksnd();
@@ -296,7 +288,6 @@ static int Mint_CheckAudio(_THIS, SDL_AudioSpec *spec)
 static void Mint_InitAudio(_THIS, SDL_AudioSpec *spec)
 {
 	int channels_mode, prediv, dmaclock;
-	void *buffer;
 
 	/* Stop currently playing sound */
 	SDL_MintAudio_quit_thread = SDL_FALSE;
@@ -338,10 +329,7 @@ static void Mint_InitAudio(_THIS, SDL_AudioSpec *spec)
 	}
 
 	/* Set buffer */
-	buffer = SDL_MintAudio_audiobuf[SDL_MintAudio_numbuf];
-	if (Setbuffer(0, buffer, buffer + spec->size)<0) {
-		DEBUG_PRINT((DEBUG_NAME "Setbuffer() failed\n"));
-	}
+	Mint_SwapBuffers(MINTAUDIO_audiobuf[0], MINTAUDIO_audiosize);
 	
 	if (SDL_MintAudio_mint_present) {
 		SDL_MintAudio_thread_pid = tfork(SDL_MintAudio_Thread, 0);
@@ -376,29 +364,20 @@ static int Mint_OpenAudio(_THIS, SDL_AudioSpec *spec)
 		return -1;
 	}
 
-	SDL_CalculateAudioSpec(spec);
-
-	/* Allocate memory for audio buffers in DMA-able RAM */
-	DEBUG_PRINT((DEBUG_NAME "buffer size=%d\n", spec->size));
-
-	SDL_MintAudio_audiobuf[0] = Atari_SysMalloc(spec->size *2, MX_STRAM);
-	if (SDL_MintAudio_audiobuf[0]==NULL) {
-		SDL_SetError("MINT_OpenAudio: Not enough memory for audio buffer");
-		return (-1);
+	if (!SDL_MintAudio_InitBuffers(spec)) {
+		return -1;
 	}
-	SDL_MintAudio_audiobuf[1] = SDL_MintAudio_audiobuf[0] + spec->size ;
-	SDL_MintAudio_numbuf=0;
-	SDL_memset(SDL_MintAudio_audiobuf[0], spec->silence, spec->size *2);
-	SDL_MintAudio_audiosize = spec->size;
-	SDL_MintAudio_mutex = 0;
-
-	DEBUG_PRINT((DEBUG_NAME "buffer 0 at 0x%08x\n", SDL_MintAudio_audiobuf[0]));
-	DEBUG_PRINT((DEBUG_NAME "buffer 1 at 0x%08x\n", SDL_MintAudio_audiobuf[1]));
-
-	SDL_MintAudio_CheckFpu();
 
 	/* Setup audio hardware */
+	MINTAUDIO_swapbuf = Mint_SwapBuffers;
 	Mint_InitAudio(this, spec);
 
     return(1);	/* We don't use SDL threaded audio */
+}
+
+static void Mint_SwapBuffers(Uint8 *nextbuf, int nextsize)
+{
+	unsigned long buffer = (unsigned long) nextbuf;
+
+	Setbuffer(0, buffer, buffer + nextsize);
 }

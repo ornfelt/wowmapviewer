@@ -1,2 +1,4 @@
 *.o
 *.suo
+build/
+build_64

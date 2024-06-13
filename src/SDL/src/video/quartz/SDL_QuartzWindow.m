@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009  Sam Lantinga
+    Copyright (C) 1997-2012  Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -219,6 +219,13 @@ static void QZ_SetPortAlphaOpaque () {
 @end
 
 @implementation SDL_QuartzView
+
+void QZ_UpdateRectsOnDrawRect(/*TODO: NSRect from drawRect*/);
+
+- (void)drawRect:(NSRect)dirtyRect
+{
+    QZ_UpdateRectsOnDrawRect();
+}
 
 - (void)resetCursorRects
 {

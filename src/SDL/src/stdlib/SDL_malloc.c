@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,6 @@
 #include "SDL_stdinc.h"
 
 #ifndef HAVE_MALLOC
-
 #define LACKS_SYS_TYPES_H
 #define LACKS_STDIO_H
 #define LACKS_STRINGS_H
@@ -480,7 +479,9 @@ DEFAULT_MMAP_THRESHOLD       default: 256K
 #endif  /* _WIN32 */
 #endif  /* WIN32 */
 #ifdef WIN32
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #define HAVE_MMAP 1
 #define HAVE_MORECORE 0
@@ -491,10 +492,18 @@ DEFAULT_MMAP_THRESHOLD       default: 256K
 #define LACKS_STRINGS_H
 #define LACKS_SYS_TYPES_H
 #define LACKS_ERRNO_H
-#define LACKS_FCNTL_H 
+#define LACKS_FCNTL_H
 #define MALLOC_FAILURE_ACTION
 #define MMAP_CLEARS 0 /* WINCE and some others apparently don't clear */
 #endif  /* WIN32 */
+
+#ifdef __OS2__
+#define INCL_DOS
+#include <os2.h>
+#define HAVE_MMAP 1
+#define HAVE_MORECORE 0
+#define LACKS_SYS_MMAN_H
+#endif  /* __OS2__ */
 
 #if defined(DARWIN) || defined(_DARWIN)
 /* Mac OSX docs advise not to use sbrk; it seems better to use mmap */
@@ -609,12 +618,12 @@ DEFAULT_MMAP_THRESHOLD       default: 256K
 #define MALLINFO_FIELD_TYPE size_t
 #endif  /* MALLINFO_FIELD_TYPE */
 
-#define memset	SDL_memset
-#define memcpy	SDL_memcpy
-#define malloc	SDL_malloc
-#define calloc	SDL_calloc
-#define realloc	SDL_realloc
-#define free	SDL_free
+#define memset  SDL_memset
+#define memcpy  SDL_memcpy
+#define malloc  SDL_malloc
+#define calloc  SDL_calloc
+#define realloc SDL_realloc
+#define free    SDL_free
 
 /*
   mallopt tuning options.  SVID/XPG defines four standard parameter
@@ -716,7 +725,7 @@ extern "C" {
   maximum supported value of n differs across systems, but is in all
   cases less than the maximum representable value of a size_t.
 */
-void* dlmalloc(size_t);
+void* SDLCALL dlmalloc(size_t);
 
 /*
   free(void* p)
@@ -725,14 +734,14 @@ void* dlmalloc(size_t);
   It has no effect if p is null. If p was not malloced or already
   freed, free(p) will by default cause the current program to abort.
 */
-void  dlfree(void*);
+void SDLCALL dlfree(void*);
 
 /*
   calloc(size_t n_elements, size_t element_size);
   Returns a pointer to n_elements * element_size bytes, with all locations
   set to zero.
 */
-void* dlcalloc(size_t, size_t);
+void* SDLCALL dlcalloc(size_t, size_t);
 
 /*
   realloc(void* p, size_t n)
@@ -757,7 +766,7 @@ void* dlcalloc(size_t, size_t);
   to be used as an argument to realloc is not supported.
 */
 
-void* dlrealloc(void*, size_t);
+void* SDLCALL dlrealloc(void*, size_t);
 
 /*
   memalign(size_t alignment, size_t n);
@@ -1230,7 +1239,7 @@ int mspace_mallopt(int, int);
 #ifndef LACKS_UNISTD_H
 #include <unistd.h>     /* for sbrk */
 #else /* LACKS_UNISTD_H */
-#if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
+#if !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__) && !defined(__DragonFly__)
 extern void*     sbrk(ptrdiff_t);
 #endif /* FreeBSD etc */
 #endif /* LACKS_UNISTD_H */
@@ -1334,7 +1343,7 @@ extern void*     sbrk(ptrdiff_t);
 #define IS_MMAPPED_BIT       (SIZE_T_ONE)
 #define USE_MMAP_BIT         (SIZE_T_ONE)
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__OS2__)
 #define CALL_MUNMAP(a, s)    munmap((a), (s))
 #define MMAP_PROT            (PROT_READ|PROT_WRITE)
 #if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
@@ -1357,6 +1366,42 @@ static int dev_zero_fd = -1; /* Cached file descriptor for /dev/zero. */
 #endif /* MAP_ANONYMOUS */
 
 #define DIRECT_MMAP(s)       CALL_MMAP(s)
+
+#elif defined(__OS2__)
+
+/* OS/2 MMAP via DosAllocMem */
+static void* os2mmap(size_t size) {
+  void* ptr;
+  if (DosAllocMem(&ptr, size, OBJ_ANY|PAG_COMMIT|PAG_READ|PAG_WRITE) &&
+      DosAllocMem(&ptr, size, PAG_COMMIT|PAG_READ|PAG_WRITE))
+    return MFAIL;
+  return ptr;
+}
+
+#define os2direct_mmap(n)     os2mmap(n)
+
+/* This function supports releasing coalesed segments */
+static int os2munmap(void* ptr, size_t size) {
+  while (size) {
+    ULONG ulSize = size;
+    ULONG ulFlags = 0;
+    if (DosQueryMem(ptr, &ulSize, &ulFlags) != 0)
+      return -1;
+    if ((ulFlags & PAG_BASE) == 0 ||(ulFlags & PAG_COMMIT) == 0 ||
+        ulSize > size)
+      return -1;
+    if (DosFreeMem(ptr) != 0)
+      return -1;
+    ptr = ( void * ) ( ( char * ) ptr + ulSize );
+    size -= ulSize;
+  }
+  return 0;
+}
+
+#define CALL_MMAP(s)         os2mmap(s)
+#define CALL_MUNMAP(a, s)    os2munmap((a), (s))
+#define DIRECT_MMAP(s)       os2direct_mmap(s)
+
 #else /* WIN32 */
 
 /* Win32 MMAP via VirtualAlloc */
@@ -1433,7 +1478,7 @@ static int win32munmap(void* ptr, size_t size) {
     unique mparams values are initialized only once.
 */
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__OS2__)
 /* By default use posix locks */
 #include <pthread.h>
 #define MLOCK_T pthread_mutex_t
@@ -1446,6 +1491,16 @@ static MLOCK_T morecore_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif /* HAVE_MORECORE */
 
 static MLOCK_T magic_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#elif defined(__OS2__)
+#define MLOCK_T HMTX
+#define INITIAL_LOCK(l)      DosCreateMutexSem(0, l, 0, FALSE)
+#define ACQUIRE_LOCK(l)      DosRequestMutexSem(*l, SEM_INDEFINITE_WAIT)
+#define RELEASE_LOCK(l)      DosReleaseMutexSem(*l)
+#if HAVE_MORECORE
+static MLOCK_T morecore_mutex;
+#endif /* HAVE_MORECORE */
+static MLOCK_T magic_init_mutex;
 
 #else /* WIN32 */
 /*
@@ -2244,7 +2299,7 @@ static size_t traverse_and_check(mstate m);
 #define treebin_at(M,i)     (&((M)->treebins[i]))
 
 /* assign tree index for size S to variable I */
-#if defined(__GNUC__) && defined(i386)
+#if defined(__GNUC__) && defined(__i386__)
 #define compute_tree_index(S, I)\
 {\
   size_t X = S >> TREEBIN_SHIFT;\
@@ -2309,7 +2364,7 @@ static size_t traverse_and_check(mstate m);
 
 /* index corresponding to given bit */
 
-#if defined(__GNUC__) && defined(i386)
+#if defined(__GNUC__) && defined(__i386__)
 #define compute_bit2idx(X, I)\
 {\
   unsigned int J;\
@@ -2502,10 +2557,15 @@ static int init_mparams(void) {
     }
     RELEASE_MAGIC_INIT_LOCK();
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__OS2__)
     mparams.page_size = malloc_getpagesize;
     mparams.granularity = ((DEFAULT_GRANULARITY != 0)?
                            DEFAULT_GRANULARITY : mparams.page_size);
+#elif defined (__OS2__)
+    /* if low-memory is used, os2munmap() would break
+       if it were anything other than 64k */
+    mparams.page_size = 4096u;
+    mparams.granularity = 65536u;
 #else /* WIN32 */
     {
       SYSTEM_INFO system_info;

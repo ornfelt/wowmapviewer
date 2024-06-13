@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -32,7 +32,7 @@
    iconv() may or may not use const char ** for the inbuf param.
    If we get this wrong, it's just a warning, so no big deal.
 */
-#if defined(_XGP6) || \
+#if defined(_XGP6) || defined(__RISCOS__) || \
     defined(__GLIBC__) && ((__GLIBC__ > 2) || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 2))
 #define ICONV_INBUF_NONCONST
 #endif
@@ -383,7 +383,7 @@ size_t SDL_iconv(SDL_iconv_t cd,
 						*/
 						ch = UNKNOWN_UNICODE;
 					} else {
-						if ( (p[0] & 0xCE) == 0xC0 ) {
+						if ( (p[0] & 0xDE) == 0xC0 ) {
 							overlong = SDL_TRUE;
 						}
 						ch = (Uint32)(p[0] & 0x1F);
@@ -855,6 +855,7 @@ char *SDL_iconv_string(const char *tocode, const char *fromcode, const char *inb
 				stringsize *= 2;
 				string = SDL_realloc(string, stringsize);
 				if ( !string ) {
+					SDL_free(oldstring);
 					SDL_iconv_close(cd);
 					return NULL;
 				}

@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,9 @@
 #include "SDL_config.h"
 
 /* Handle the event stream, converting X11 events into SDL events */
+
+#include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include <vga.h>
 #include <vgamouse.h>

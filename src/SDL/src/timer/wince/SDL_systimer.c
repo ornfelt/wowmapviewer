@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -92,8 +92,6 @@ void SDL_StartTicks(void)
   start_ticks=wce_ticks();
 }
 
-static UINT WIN_timer;
-
 #if ( _WIN32_WCE <= 420 )
 
 static HANDLE timersThread = 0;
@@ -143,8 +141,9 @@ void SDL_SYS_TimerQuit(void)
 
 #else
 
+#if defined _MSC_VER
 #pragma comment(lib, "mmtimer.lib")
-
+#endif
 /* Data to handle a single periodic alarm */
 static UINT timerID = 0;
 

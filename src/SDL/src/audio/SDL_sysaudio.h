@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is SDL_free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -59,6 +59,8 @@ struct SDL_AudioDevice {
 	void (*LockAudio)(_THIS);
 	void (*UnlockAudio)(_THIS);
 
+	void (*SetCaption)(_THIS, const char *caption);
+
 	/* * * */
 	/* Data common to all devices */
 
@@ -100,6 +102,9 @@ typedef struct AudioBootStrap {
 	SDL_AudioDevice *(*create)(int devindex);
 } AudioBootStrap;
 
+#if SDL_AUDIO_DRIVER_SNDIO
+extern AudioBootStrap SNDIO_bootstrap;
+#endif
 #if SDL_AUDIO_DRIVER_BSD
 extern AudioBootStrap BSD_AUDIO_bootstrap;
 #endif

@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -36,7 +36,7 @@
 typedef struct
 {
 	Uint16 number;		/* Video mode number */
-	Uint16 width;		/* Size */	
+	Uint16 width;		/* Size */
 	Uint16 height;
 	Uint16 depth;		/* bits per plane */
 	Uint16 flags;
@@ -46,7 +46,6 @@ typedef struct
 #define NUM_MODELISTS	4		/* 8, 16, 24, and 32 bits-per-pixel */
 
 struct SDL_PrivateVideoData {
-	long cookie_vdo;
 	long old_video_mode;				/* Old video mode before entering SDL */
 	void *old_video_base;			/* Old pointer to screen buffer */
 	void *old_palette;				/* Old palette */
@@ -58,12 +57,28 @@ struct SDL_PrivateVideoData {
 	int frame_number;		/* Number of frame for double buffer */
 	int pitch;				/* Destination line width for C2P */
 
-	SDL_bool centscreen;	/* Centscreen extension present ? */
-
 	xbiosmode_t *current;	/* Current set mode */
 	int SDL_nummodes[NUM_MODELISTS];
 	SDL_Rect **SDL_modelist[NUM_MODELISTS];
 	xbiosmode_t **SDL_xbiosmode[NUM_MODELISTS];
+
+	union {
+		Uint16 pal16[16];
+		Uint32 pal32[256];
+	} palette;
+
+	void (*listModes)(_THIS, int actually_add);	/* List video modes */
+	void (*saveMode)(_THIS, SDL_PixelFormat *vformat);	/* Save mode,palette,vbase change format if needed */
+	void (*setMode)(_THIS, xbiosmode_t *new_video_mode);	/* Set mode */
+	void (*restoreMode)(_THIS);	/* Restore system mode */
+	void (*vsync)(_THIS);
+	void (*getScreenFormat)(_THIS, int bpp, Uint32 *rmask, Uint32 *gmask, Uint32 *bmask, Uint32 *amask);	/* Get TrueColor screen format */
+	int (*getLineWidth)(_THIS, xbiosmode_t *new_video_mode, int width, int bpp);	/* Return video mode pitch */
+	void (*swapVbuffers)(_THIS);	/* Swap video buffers */
+	int (*allocVbuffers)(_THIS, int num_buffers, int bufsize);	/* Allocate video buffers */
+	void (*freeVbuffers)(_THIS);	/* Free video buffers */
+
+	void (*updRects)(_THIS, int numrects, SDL_Rect *rects);	/* updateRects to use when video ready */
 };
 
 /* _VDO cookie values */
@@ -86,22 +101,10 @@ enum {
 /* EgetShift masks */
 #define ES_MODE		0x0700
 
-/* TT shifter modes */
-#ifndef ST_LOW
-#define ST_LOW	0x0000
-#define ST_MED	0x0100
-#define ST_HIGH	0x0200
-#define TT_LOW	0x0700
-#define TT_MED	0x0300
-#define TT_HIGH	0x0600
-#endif
-
 /* Hidden structure -> variables names */
 #define SDL_nummodes		(this->hidden->SDL_nummodes)
 #define SDL_modelist		(this->hidden->SDL_modelist)
 #define SDL_xbiosmode		(this->hidden->SDL_xbiosmode)
-#define XBIOS_mutex		    (this->hidden->mutex)
-#define XBIOS_cvdo		    (this->hidden->cookie_vdo)
 #define XBIOS_oldpalette	(this->hidden->old_palette)
 #define XBIOS_oldnumcol		(this->hidden->old_num_colors)
 #define XBIOS_oldvbase		(this->hidden->old_video_base)
@@ -111,11 +114,42 @@ enum {
 #define XBIOS_shadowscreen	(this->hidden->shadowscreen)
 #define XBIOS_fbnum			(this->hidden->frame_number)
 #define XBIOS_pitch			(this->hidden->pitch)
-#define XBIOS_centscreen	(this->hidden->centscreen)
 #define XBIOS_current		(this->hidden->current)
+#define XBIOS_recoffset		(this->hidden->recalc_offset)
+
+#define TT_palette		(this->hidden->palette.pal16)
+#define F30_palette		(this->hidden->palette.pal32)
+
+#define XBIOS_listModes		(this->hidden->listModes)
+#define XBIOS_saveMode		(this->hidden->saveMode)
+#define XBIOS_setMode		(this->hidden->setMode)
+#define XBIOS_restoreMode	(this->hidden->restoreMode)
+#define XBIOS_vsync			(this->hidden->vsync)
+#define XBIOS_getScreenFormat	(this->hidden->getScreenFormat)
+#define XBIOS_getLineWidth	(this->hidden->getLineWidth)
+#define XBIOS_swapVbuffers	(this->hidden->swapVbuffers)
+#define XBIOS_allocVbuffers	(this->hidden->allocVbuffers)
+#define XBIOS_freeVbuffers	(this->hidden->freeVbuffers)
+
+#define XBIOS_updRects		(this->hidden->updRects)
 
 /*--- Functions prototypes ---*/
 
 void SDL_XBIOS_AddMode(_THIS, int actually_add, const xbiosmode_t *modeinfo);
+
+/* SDL_xbios_st.c */
+void SDL_XBIOS_VideoInit_ST(_THIS, unsigned long cookie_cvdo);
+
+/* SDL_xbios_tt.c */
+void SDL_XBIOS_VideoInit_TT(_THIS);
+
+/* SDL_xbios_f30.c */
+void SDL_XBIOS_VideoInit_F30(_THIS);
+
+/* SDL_xbios_milan.c */
+void SDL_XBIOS_VideoInit_Milan(_THIS);
+
+/* SDL_xbios_ctpci.c */
+void SDL_XBIOS_VideoInit_Ctpci(_THIS);
 
 #endif /* _SDL_xbios_h */

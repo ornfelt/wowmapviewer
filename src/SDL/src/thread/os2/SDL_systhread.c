@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -62,7 +62,7 @@ int SDL_SYS_CreateThread(SDL_Thread *thread, void *args, pfnSDL_CurrentBeginThre
   pThreadStartParms pThreadParms = SDL_malloc(sizeof(tThreadStartParms));
   if (!pThreadParms)
   {
-    SDL_SetError("Not enough memory to create thread");
+    SDL_OutOfMemory();
     return(-1);
   }
 

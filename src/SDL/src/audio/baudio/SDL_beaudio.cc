@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -199,10 +199,10 @@ int BE_OpenAudio(_THIS, SDL_AudioSpec *spec)
         return (-1);
     }
 
-    format.buffer_size = spec->samples;
-
 	/* Calculate the final parameters for this audio specification */
 	SDL_CalculateAudioSpec(spec);
+
+    format.buffer_size = spec->size;
 
 	/* Subscribe to the audio stream (creates a new thread) */
 	{ sigset_t omask;

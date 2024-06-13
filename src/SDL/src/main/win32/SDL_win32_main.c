@@ -98,7 +98,7 @@ static int ParseCommandLine(char *cmdline, char **argv)
 				++argc;
 			}
 			/* Skip over word */
-			while ( *bufp && ( *bufp != '"' || *lastp == '\\' ) ) {
+			while ( *bufp && ( *bufp != '"' || (lastp && *lastp == '\\') ) ) {
 				lastp = bufp;
 				++bufp;
 			}
@@ -256,6 +256,8 @@ static void redirect_output(void)
 		}
 #endif
 	}
+#else
+	(void) newfp;
 #endif /* _WIN32_WCE */
 
 	setvbuf(stdout, NULL, _IOLBF, BUFSIZ);	/* Line buffered */
@@ -328,7 +330,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPWSTR szCmdLine, int sw)
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw)
 #endif
 {
-	HINSTANCE handle;
+	HMODULE handle;
 	char **argv;
 	int argc;
 	char *cmdline;

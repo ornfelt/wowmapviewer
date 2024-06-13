@@ -1,6 +1,6 @@
 /*
 	SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Library General Public
@@ -33,17 +33,15 @@
 #include <mach/mach_error.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/IOCFPlugIn.h>
+#if (MAC_OS_X_VERSION_MAX_ALLOWED < 1050)
 #ifdef MACOS_10_0_4
 #include <IOKit/hidsystem/IOHIDUsageTables.h>
 #else
 /* The header was moved here in Mac OS X 10.1 */
 #include <Kernel/IOKit/hidsystem/IOHIDUsageTables.h>
 #endif
-#if MAC_OS_X_VERSION_MIN_REQUIRED == 1030
-#include "10.3.9-FIX/IOHIDLib.h"
-#else
+#endif /* MAC_OS_X_VERSION_MAX_ALLOWED < 1050 */
 #include <IOKit/hid/IOHIDLib.h>
-#endif
 #include <IOKit/hid/IOHIDKeys.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <Carbon/Carbon.h> /* for NewPtrClear, DisposePtr */
@@ -113,6 +111,7 @@ static void HIDReportErrorNum (char * strError, long numError)
 }
 
 static void HIDGetCollectionElements (CFMutableDictionaryRef deviceProperties, recDevice *pDevice);
+static int GetIntValueFromDictionary(CFDictionaryRef dict, CFStringRef name, int defaultValue);
 
 /* returns current value for element, polling element
  * will return 0 on error conditions which should be accounted for by application
@@ -186,7 +185,7 @@ static IOReturn HIDCreateOpenDeviceInterface (io_object_t hidDevice, recDevice *
 			plugInResult = (*ppPlugInInterface)->QueryInterface (ppPlugInInterface,
 								CFUUIDGetUUIDBytes (kIOHIDDeviceInterfaceID), (void *) &(pDevice->interface));
 			if (S_OK != plugInResult)
-				HIDReportErrorNum ("CouldnÕt query HID class device interface from plugInInterface", plugInResult);
+				HIDReportErrorNum ("Couldn't query HID class device interface from plugInInterface", plugInResult);
 			(*ppPlugInInterface)->Release (ppPlugInInterface);
 		}
 		else
@@ -277,7 +276,7 @@ static void HIDGetElementInfo (CFTypeRef refElement, recElement *pElement)
 	if (refType)
 		pElement->nullState = CFBooleanGetValue (refType);
 */
-}			
+}
 
 /* examines CF dictionary vlaue in device element hierarchy to determine if it is element of interest or a collection of more elements
  * if element of interest allocate storage, add to list and retrieve element specific info
@@ -333,7 +332,7 @@ static void HIDAddElement (CFTypeRef refElement, recDevice* pDevice)
 										headElement = &(pDevice->firstHat);
 									}
 								break;
-							}							
+							}
 						}
 						break;
 					case kHIDPage_Button:
@@ -343,6 +342,21 @@ static void HIDAddElement (CFTypeRef refElement, recDevice* pDevice)
 							pDevice->buttons++;
 							headElement = &(pDevice->firstButton);
 						}
+						break;
+					case kHIDPage_Simulation:
+					{
+						switch (usage) /* look at usage to determine function */
+						{
+							case kHIDUsage_Sim_Rudder:
+							case kHIDUsage_Sim_Throttle:
+							element = (recElement *) NewPtrClear (sizeof (recElement));
+							if (element)
+							{
+								pDevice->axes++;
+								headElement = &(pDevice->firstAxis);
+							}
+							break;
+						} }
 						break;
 					default:
 						break;
@@ -393,7 +407,7 @@ static void HIDGetElements (CFTypeRef refElementCurrent, recDevice *pDevice)
 		/* CountElementsCFArrayHandler called for each array member */
 		CFArrayApplyFunction (refElementCurrent, range, HIDGetElementsCFArrayHandler, pDevice);
 	}
-}			
+}
 
 /* handles extracting element information from element collection CF types
  * used from top level element decoding and hierarchy deconstruction to flatten device element list
@@ -490,29 +504,17 @@ static void HIDGetDeviceInfo (io_object_t hidDevice, CFMutableDictionaryRef hidP
 }
 
 
-static recDevice *HIDBuildDevice (io_object_t hidDevice)
+static recDevice *HIDBuildDevice (io_object_t hidDevice, CFMutableDictionaryRef hidProperties)
 {
 	recDevice *pDevice = (recDevice *) NewPtrClear (sizeof (recDevice));
 	if (pDevice)
 	{
-		/* get dictionary for HID properties */
-		CFMutableDictionaryRef hidProperties = 0;
-		kern_return_t result = IORegistryEntryCreateCFProperties (hidDevice, &hidProperties, kCFAllocatorDefault, kNilOptions);
-		if ((result == KERN_SUCCESS) && hidProperties)
+		/* create device interface */
+		kern_return_t result = HIDCreateOpenDeviceInterface (hidDevice, pDevice);
+		if (kIOReturnSuccess == result)
 		{
-			/* create device interface */
-			result = HIDCreateOpenDeviceInterface (hidDevice, pDevice);
-			if (kIOReturnSuccess == result)
-			{
-				HIDGetDeviceInfo (hidDevice, hidProperties, pDevice); /* hidDevice used to find parents in registry tree */
-				HIDGetCollectionElements (hidProperties, pDevice);
-			}
-			else
-			{
-				DisposePtr((Ptr)pDevice);
-				pDevice = NULL;
-			}
-			CFRelease (hidProperties);
+			HIDGetDeviceInfo (hidDevice, hidProperties, pDevice); /* hidDevice used to find parents in registry tree */
+			HIDGetCollectionElements (hidProperties, pDevice);
 		}
 		else
 		{
@@ -579,15 +581,16 @@ int SDL_SYS_JoystickInit(void)
 	CFMutableDictionaryRef hidMatchDictionary = NULL;
 	recDevice *device, *lastDevice;
 	io_object_t ioHIDDeviceObject = 0;
-	
+	CFMutableDictionaryRef hidProperties;
+
 	SDL_numjoysticks = 0;
-	
+
 	if (gpDeviceList)
 	{
 		SDL_SetError("Joystick: Device list already inited.");
 		return -1;
 	}
-	
+
 	result = IOMasterPort (bootstrap_port, &masterPort);
 	if (kIOReturnSuccess != result)
 	{
@@ -600,7 +603,7 @@ int SDL_SYS_JoystickInit(void)
 	if (hidMatchDictionary)
 	{
 		/* Add key for device type (joystick, in this case) to refine the matching dictionary. */
-		
+
 		/* NOTE: we now perform this filtering later
 		UInt32 usagePage = kHIDPage_GenericDesktop;
 		UInt32 usage = kHIDUsage_GD_Joystick;
@@ -617,7 +620,7 @@ int SDL_SYS_JoystickInit(void)
 		SDL_SetError("Joystick: Failed to get HID CFMutableDictionaryRef via IOServiceMatching.");
 		return -1;
 	}
-	
+
 	/*/ Now search I/O Registry for matching devices. */
 	result = IOServiceGetMatchingServices (masterPort, hidMatchDictionary, &hidObjectIterator);
 	/* Check for errors */
@@ -637,32 +640,38 @@ int SDL_SYS_JoystickInit(void)
 	/* build flat linked list of devices from device iterator */
 
 	gpDeviceList = lastDevice = NULL;
-	
-	while ((ioHIDDeviceObject = IOIteratorNext (hidObjectIterator)))
+
+	for (ioHIDDeviceObject = IOIteratorNext(hidObjectIterator);
+		 ioHIDDeviceObject != 0;
+		 IOObjectRelease(ioHIDDeviceObject), ioHIDDeviceObject = IOIteratorNext(hidObjectIterator))
 	{
+		/* get dictionary for HID properties */
+		result = IORegistryEntryCreateCFProperties(ioHIDDeviceObject, &hidProperties, kCFAllocatorDefault, kNilOptions);
+		if (result != KERN_SUCCESS || hidProperties == NULL)
+			continue;
+		/* Filter device list to non-keyboard/mouse stuff */
+		int page = GetIntValueFromDictionary(hidProperties, CFSTR(kIOHIDPrimaryUsagePageKey), kHIDPage_Undefined);
+		int usage = GetIntValueFromDictionary(hidProperties, CFSTR(kIOHIDPrimaryUsageKey), kHIDUsage_Undefined);
+		Boolean skip = true;
+		switch (page) {
+			case kHIDPage_GenericDesktop:
+				switch (usage) {
+					case kHIDUsage_GD_Joystick:
+					case kHIDUsage_GD_GamePad:
+					case kHIDUsage_GD_MultiAxisController:
+						skip = false;
+						break;
+				}
+				break;
+		}
+#if DEBUG
+		printf("<%s> skip = %s, device %i:%i\n", __func__, skip ? "true" : "false", page, usage);
+#endif
 		/* build a device record */
-		device = HIDBuildDevice (ioHIDDeviceObject);
+		device = skip ? NULL : HIDBuildDevice(ioHIDDeviceObject, hidProperties);
+		CFRelease(hidProperties);
 		if (!device)
 			continue;
-
-		/* dump device object, it is no longer needed */
-		result = IOObjectRelease (ioHIDDeviceObject);
-/*		if (KERN_SUCCESS != result)
-			HIDReportErrorNum ("IOObjectRelease error with ioHIDDeviceObject.", result);
-*/
-
-		/* Filter device list to non-keyboard/mouse stuff */ 
-		if ( (device->usagePage != kHIDPage_GenericDesktop) ||
-		     ((device->usage != kHIDUsage_GD_Joystick &&
-		      device->usage != kHIDUsage_GD_GamePad &&
-		      device->usage != kHIDUsage_GD_MultiAxisController)) ) {
-
-			/* release memory for the device */
-			HIDDisposeDevice (&device);
-			DisposePtr((Ptr)device);
-			continue;
-		}
-		
 		/* Add device to the end of the list */
 		if (lastDevice)
 			lastDevice->pNext = device;
@@ -679,7 +688,7 @@ int SDL_SYS_JoystickInit(void)
 		SDL_numjoysticks++;
 		device = device->pNext;
 	}
-	
+
 	return SDL_numjoysticks;
 }
 
@@ -687,7 +696,7 @@ int SDL_SYS_JoystickInit(void)
 const char *SDL_SYS_JoystickName(int index)
 {
 	recDevice *device = gpDeviceList;
-	
+
 	for (; index > 0; index--)
 		device = device->pNext;
 
@@ -703,7 +712,7 @@ int SDL_SYS_JoystickOpen(SDL_Joystick *joystick)
 {
 	recDevice *device = gpDeviceList;
 	int index;
-	
+
 	for (index = joystick->index; index > 0; index--)
 		device = device->pNext;
 
@@ -760,7 +769,7 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
 		element = element->pNext;
 		++i;
 	}
-	
+
 	element = device->firstButton;
 	i = 0;
 	while (element)
@@ -773,7 +782,7 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
 		element = element->pNext;
 		++i;
 	}
-	    
+
 	element = device->firstHat;
 	i = 0;
 	while (element)
@@ -825,7 +834,7 @@ void SDL_SYS_JoystickUpdate(SDL_Joystick *joystick)
 		element = element->pNext;
 		++i;
 	}
-	
+
 	return;
 }
 
@@ -841,6 +850,22 @@ void SDL_SYS_JoystickQuit(void)
 {
 	while (NULL != gpDeviceList)
 		gpDeviceList = HIDDisposeDevice (&gpDeviceList);
+}
+
+/* Get integer value from CFDictionary */
+static int GetIntValueFromDictionary(CFDictionaryRef dict, CFStringRef name, int defaultValue)
+{
+	int result;
+	CFNumberRef number;
+	CFTypeID type_id;
+	if (CFDictionaryGetValueIfPresent(dict, name, (CFTypeRef*) &number)) {
+		type_id = CFGetTypeID(number);
+		if (type_id == CFNumberGetTypeID()) {
+			if (CFNumberGetValue(number, kCFNumberIntType, &result))
+				return result;
+		}
+	}
+	return defaultValue;
 }
 
 #endif /* SDL_JOYSTICK_IOKIT */

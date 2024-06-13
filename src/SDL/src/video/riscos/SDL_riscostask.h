@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -25,6 +25,9 @@
     This file added by Alan Buckley (alan_baa@hotmail.com) to support RISC OS 
 	26 March 2003
 */
+
+extern int riscos_backbuffer; /* Create a back buffer in system memory for full screen mode */
+extern int riscos_closeaction; /* Close icon action */
 
 /* Task initialisation/Clean up */
 

@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -47,7 +47,29 @@
 
 #ifdef _WIN32_WCE
 #define NO_GETKEYBOARDSTATE
+
+/* The following virtual keys were undefined for Windows Embedded CE,
+   but they exist as application keys in Windows Mobile. */
+#ifndef VK_APP1
+#define VK_APP1		0xC1
 #endif
+#ifndef VK_APP2
+#define VK_APP2		0xC2
+#endif
+#ifndef VK_APP3
+#define VK_APP3		0xC3
+#endif
+#ifndef VK_APP4
+#define VK_APP4		0xC4
+#endif
+#ifndef VK_APP5
+#define VK_APP5		0xC5
+#endif
+#ifndef VK_APP6
+#define VK_APP6		0xC6
+#endif
+
+#endif /* _WIN32_WCE */
 
 /* The translation table from a Microsoft VK keysym to a SDL keysym */
 static SDLKey VK_keymap[SDLK_LAST];
@@ -88,7 +110,7 @@ WPARAM rotateKey(WPARAM key,int direction)
 	return key;
 }
 
-static void GapiTransform(GapiInfo *gapiInfo, LONG *x, LONG *y)
+void GapiTransform(GapiInfo *gapiInfo, LONG *x, LONG *y)
 {
     if(gapiInfo->hiresFix)
     {
@@ -111,7 +133,7 @@ static void GapiTransform(GapiInfo *gapiInfo, LONG *x, LONG *y)
     // 0 0 0
     if((!gapiInfo->userOrientation && !gapiInfo->systemOrientation && !gapiInfo->gapiOrientation) ||
     // 0 0 3
-      (!gapiInfo->userOrientation && !gapiInfo->systemOrientation && gapiInfo->gapiOrientation))
+       (!gapiInfo->userOrientation && !gapiInfo->systemOrientation && gapiInfo->gapiOrientation))
     {
 	// without changes
 	// *x = *x;
@@ -198,7 +220,7 @@ LRESULT DIB_HandleMessage(_THIS, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 				m.wParam = wParam;
 				m.lParam = lParam;
 				m.time = 0;
-				if ( PeekMessage(&m, hwnd, 0, WM_USER, PM_NOREMOVE) && (m.message == WM_CHAR) ) {
+				if ( TranslateMessage(&m) && PeekMessage(&m, hwnd, 0, WM_USER, PM_NOREMOVE) && (m.message == WM_CHAR) ) {
 					GetMessage(&m, hwnd, 0, WM_USER);
 			    		wParam = m.wParam;
 				}
@@ -309,6 +331,9 @@ LRESULT DIB_HandleMessage(_THIS, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 }
 
 #ifdef _WIN32_WCE
+#ifdef __GNUC__
+BOOL WINAPI GetMouseMovePoints(PPOINT pptBuf, UINT nBufPoints, UINT *pnPointsRetrieved); /* missing in mingw32ce headers */
+#endif
 static BOOL GetLastStylusPos(POINT* ptLast)
 {
     BOOL bResult = FALSE;
@@ -350,7 +375,7 @@ static void DIB_GenerateMouseMotionEvent(_THIS)
 	} else {
 		ScreenToClient(SDL_Window, &mouse);
 #ifdef SDL_VIDEO_DRIVER_GAPI
-       if (SDL_VideoSurface && this->hidden->gapiInfo)
+		if (SDL_VideoSurface && this->hidden->gapiInfo)
 			GapiTransform(this->hidden->gapiInfo, &mouse.x, &mouse.y);
 #endif
 		posted = SDL_PrivateMouseMotion(0, 0, (Sint16)mouse.x, (Sint16)mouse.y);
@@ -363,7 +388,6 @@ void DIB_PumpEvents(_THIS)
 
 	while ( PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) ) {
 		if ( GetMessage(&msg, NULL, 0, 0) > 0 ) {
-			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
 	}
@@ -530,6 +554,14 @@ void DIB_InitOSKeymap(_THIS)
 	VK_keymap[VK_SNAPSHOT] = SDLK_PRINT;
 	VK_keymap[VK_CANCEL] = SDLK_BREAK;
 	VK_keymap[VK_APPS] = SDLK_MENU;
+#ifdef _WIN32_WCE
+	VK_keymap[VK_APP1] = SDLK_F1;
+	VK_keymap[VK_APP2] = SDLK_F2;
+	VK_keymap[VK_APP3] = SDLK_F3;
+	VK_keymap[VK_APP4] = SDLK_F4;
+	VK_keymap[VK_APP5] = SDLK_F5;
+	VK_keymap[VK_APP6] = SDLK_F6;
+#endif
 
 	Arrows_keymap[3] = 0x25;
 	Arrows_keymap[2] = 0x26;
@@ -565,6 +597,14 @@ static int SDL_MapVirtualKey(int scancode, int vkey)
 		case VK_RMENU:
 		case VK_SNAPSHOT:
 		case VK_PAUSE:
+#ifdef _WIN32_WCE
+		case VK_APP1:
+		case VK_APP2:
+		case VK_APP3:
+		case VK_APP4:
+		case VK_APP5:
+		case VK_APP6:
+#endif
 			return vkey;
 	}	
 	switch(mvke) {
@@ -583,6 +623,39 @@ static int SDL_MapVirtualKey(int scancode, int vkey)
 	}
 	return mvke?mvke:vkey;
 }
+
+#ifndef _WIN32_WCE
+#ifndef MAPVK_VK_TO_VSC
+#define MAPVK_VK_TO_VSC 0
+#endif
+void
+WIN_ResetDeadKeys(void)
+{
+    /*
+    if a deadkey has been typed, but not the next character (which the deadkey might modify),
+    this tries to undo the effect pressing the deadkey.
+    see: http://archives.miloush.net/michkap/archive/2006/09/10/748775.html
+    */
+    BYTE keyboardState[256];
+    WCHAR buffer[16];
+    UINT keycode, scancode, i;
+    int result;
+
+    GetKeyboardState(keyboardState);
+    keycode = VK_SPACE;
+    scancode = MapVirtualKey(keycode, MAPVK_VK_TO_VSC);
+    if (scancode == 0) {
+        return; /* the keyboard doesn't have this key */
+    }
+
+    for (i = 0; i < 5; i++) {
+        result = SDL_ToUnicode(keycode, scancode, keyboardState, (LPWSTR)buffer, 16, 0);
+        if (result > 0) {
+            return; /* success */
+        }
+    }
+}
+#endif
 
 static SDL_keysym *TranslateKey(WPARAM vkey, UINT scancode, SDL_keysym *keysym, int pressed)
 {
@@ -655,8 +728,10 @@ int DIB_CreateWindow(_THIS)
 		MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, windowid, -1, windowid_t, SDL_strlen(windowid) + 1);
 		SDL_Window = (HWND)wcstol(windowid_t, NULL, 0);
 		SDL_free(windowid_t);
-#else
+#elif defined(_WIN64)
 		SDL_Window = (HWND)SDL_strtoull(windowid, NULL, 0);
+#else
+		SDL_Window = (HWND)SDL_strtoul(windowid, NULL, 0);
 #endif
 		if ( SDL_Window == NULL ) {
 			SDL_SetError("Couldn't get user specified window");

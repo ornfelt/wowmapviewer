@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -64,15 +64,13 @@ typedef struct SDL_Thread SDL_Thread;
 #ifndef _WIN32_WCE
 #include <process.h> /* This has _beginthread() and _endthread() defined! */
 #endif
+#ifdef __EMX__
+#include <stdlib.h>
+#endif
 
 #ifdef __OS2__
 typedef int (*pfnSDL_CurrentBeginThread)(void (*func)(void *), void *, unsigned, void *arg); 
 typedef void (*pfnSDL_CurrentEndThread)(void);
-#elif __GNUC__
-typedef unsigned long (__cdecl *pfnSDL_CurrentBeginThread) (void *, unsigned,
-        unsigned (__stdcall *func)(void *), void *arg, 
-        unsigned, unsigned *threadID);
-typedef void (__cdecl *pfnSDL_CurrentEndThread)(unsigned code);
 #else
 typedef uintptr_t (__cdecl *pfnSDL_CurrentBeginThread) (void *, unsigned,
         unsigned (__stdcall *func)(void *), void *arg, 

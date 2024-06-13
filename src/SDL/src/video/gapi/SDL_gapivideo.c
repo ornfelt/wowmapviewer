@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -371,6 +371,7 @@ static SDL_VideoDevice *GAPI_CreateDevice(int devindex)
 		GAPI_DeleteDevice(device);
 		return 0;
 	}
+#undef gx
 
 	return device;
 }
@@ -382,7 +383,7 @@ VideoBootStrap GAPI_bootstrap = {
 
 static void FillStructs(_THIS, BOOL useVga)
 {
-#ifdef _ARM_
+#if defined(_ARM_) || defined(__arm__)
 	WCHAR oemstr[100];
 #endif
 	/* fill a device properties */
@@ -395,7 +396,7 @@ static void FillStructs(_THIS, BOOL useVga)
 		gapi->useVga = 0;
 		gapi->useGXOpenDisplay = 1;
 
-#ifdef _ARM_
+#if defined(_ARM_) || defined(__arm__)
 		/* check some devices and extract addition info */
 		SystemParametersInfo( SPI_GETOEMINFO, sizeof( oemstr ), oemstr, 0 );
 
@@ -409,7 +410,7 @@ static void FillStructs(_THIS, BOOL useVga)
 		}
 #if (EMULATE_AXIM_X30 == 0)
 		// buggy Dell Axim X30
-		if( _tcsncmp(oemstr, L"Dell Axim X30", 13) == 0 )
+		if( wcsncmp(oemstr, L"Dell Axim X30", 13) == 0 )
 #endif
 		{
 			GXDeviceInfo gxInfo = {0};
@@ -727,12 +728,19 @@ SDL_Surface *GAPI_SetVideoMode(_THIS, SDL_Surface *current,
 			gapi->dstLineStep = gapi->gxProperties.cbxPitch;
 			gapi->dstPixelStep = -gapi->gxProperties.cbyPitch;
 			break;
+		default:/* silence gcc -Wswitch */
+			break;
 		}
+	default:	/* silence gcc -Wswitch */
+		break;
 	}
 
 	video->w = gapi->w = width;
 	video->h = gapi->h = height;
 	video->pitch = SDL_CalculatePitch(video); 
+	if (!video->pitch) {
+		return(NULL);
+	}
 
 	/* Small fix for WinCE/Win32 - when activating window
 	   SDL_VideoSurface is equal to zero, so activating code
@@ -1075,8 +1083,8 @@ static int updateLine16to4(_THIS, PIXEL *srcPointer, unsigned char *destPointer,
 
 static void GAPI_UpdateRectsMono(_THIS, int numrects, SDL_Rect *rects)
 {
+	int linesProcessed = 0;
 	int i, height;
-	int linesProcessed;
 	int xNibble, yNibble;
 
 	for (i=0; i<numrects; i++)
@@ -1129,11 +1137,10 @@ static void GAPI_UpdateRectsColor(_THIS, int numrects, SDL_Rect *rects)
 			switch(bytesPerPixel)
 			{
 			case 1:
-				linesProcessed = updateLine8to8(this, srcPointer, (unsigned char *) destPointer, rects[i].w, rects[i].h, height);
+				linesProcessed = updateLine8to8(this, srcPointer, destPointer, rects[i].w, rects[i].h, height);
 				break;
 			case 2:
-#pragma warning(disable: 4133)
-				linesProcessed = updateLine16to16(this, (PIXEL*) srcPointer, destPointer, rects[i].w, rects[i].h, height);
+				linesProcessed = updateLine16to16(this, (PIXEL*) srcPointer, (PIXEL*) destPointer, rects[i].w, rects[i].h, height);
 				break;
 			}
 			height -= linesProcessed;
@@ -1172,7 +1179,7 @@ void GAPI_VideoQuit(_THIS)
 	/* Destroy the window and everything associated with it */
 	if ( SDL_Window ) 
 	{
-	    if ((g_hGapiLib != 0) && this && gapi && gapi->gxFunc.GXCloseDisplay && !gapi->useVga)
+		if ((g_hGapiLib != 0) && this && gapi && gapi->gxFunc.GXCloseDisplay && !gapi->useVga)
 			gapi->gxFunc.GXCloseDisplay(); 
 
 		if (this->screen->pixels != NULL)
@@ -1189,8 +1196,8 @@ void GAPI_VideoQuit(_THIS)
 		SDL_UnregisterApp();
 
 		SDL_Window = NULL;
-#if defined(_WIN32_WCE)
 
+#if defined(_WIN32_WCE)
 // Unload wince aygshell library to prevent leak
 		if( aygshell ) 
 		{
@@ -1199,18 +1206,16 @@ void GAPI_VideoQuit(_THIS)
 		}
 #endif
 
-	/* Free video mode lists */
-	for ( i=0; i<NUM_MODELISTS; ++i ) {
-		if ( gapi->SDL_modelist[i] != NULL ) {
-			for ( j=0; gapi->SDL_modelist[i][j]; ++j )
-				SDL_free(gapi->SDL_modelist[i][j]);
-			SDL_free(gapi->SDL_modelist[i]);
-			gapi->SDL_modelist[i] = NULL;
+		/* Free video mode lists */
+		for ( i=0; i<NUM_MODELISTS; ++i ) {
+			if ( gapi->SDL_modelist[i] != NULL ) {
+				for ( j=0; gapi->SDL_modelist[i][j]; ++j )
+					SDL_free(gapi->SDL_modelist[i][j]);
+				SDL_free(gapi->SDL_modelist[i]);
+				gapi->SDL_modelist[i] = NULL;
+			}
 		}
 	}
-
-	}
-
 }
 
 static void GAPI_Activate(_THIS, BOOL active, BOOL minimized)
@@ -1234,7 +1239,7 @@ static void GAPI_WinPAINT(_THIS, HDC hdc)
 
 	int bpp = 16; // we always use either 8 or 16 bpp internally
 	HGDIOBJ prevObject;
-	unsigned short *bitmapData;
+	void* bitmapData; /* unsigned short* */
 	HBITMAP hb;
 	HDC srcDC;
 
@@ -1265,7 +1270,7 @@ static void GAPI_WinPAINT(_THIS, HDC hdc)
 		pHeader->biCompression = BI_BITFIELDS;
 	}
     // Create the DIB
-    hb =  CreateDIBSection( 0, pBMI, DIB_RGB_COLORS, (void**)&bitmapData, 0, 0 );
+    hb =  CreateDIBSection( 0, pBMI, DIB_RGB_COLORS, &bitmapData, 0, 0 );
 
 	// copy data
 	// FIXME: prevent misalignment, but I've never seen non aligned width of screen

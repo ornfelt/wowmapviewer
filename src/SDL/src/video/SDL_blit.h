@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,9 @@
 #define _SDL_blit_h
 
 #include "SDL_endian.h"
+
+extern SDL_bool SDL_HasARMSIMD(void);		/* whether CPU has ARM SIMD (ARMv6) features */
+extern SDL_bool SDL_HasNEON (void);		/* whether CPU has ARM NEON features.        */
 
 /* The structure passed to the low level blit functions */
 typedef struct {

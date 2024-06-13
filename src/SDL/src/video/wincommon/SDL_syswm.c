@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -144,15 +144,15 @@ void WIN_SetWMIcon(_THIS, SDL_Surface *icon, Uint8 *mask)
 	/* Convert icon to a standard surface format.  This may not always
 	   be necessary, as Windows supports a variety of BMP formats, but
 	   it greatly simplifies our code.
-	*/ 
-    bounds.x = 0;
-    bounds.y = 0;
-    bounds.w = icon->w;
-    bounds.h = icon->h;
-    if ( SDL_LowerBlit(icon, &bounds, icon_256, &bounds) < 0 ) {
-	    SDL_stack_free(icon_win32);
+	*/
+	bounds.x = 0;
+	bounds.y = 0;
+	bounds.w = icon->w;
+	bounds.h = icon->h;
+	if ( SDL_LowerBlit(icon, &bounds, icon_256, &bounds) < 0 ) {
+		SDL_stack_free(icon_win32);
 		SDL_FreeSurface(icon_256);
-        return;
+		return;
 	}
 
 	/* Copy pixels upside-down to icon BMP, masked with the icon mask */
@@ -211,20 +211,22 @@ typedef BOOL (WINAPI *PtrSetWindowTextW)(HWND hWnd, LPCWSTR lpString);
 
 void WIN_SetWMCaption(_THIS, const char *title, const char *icon)
 {
+	if (title) {
 #ifdef _WIN32_WCE
-	/* WinCE uses the UNICODE version */
-	LPWSTR lpszW = SDL_iconv_utf8_ucs2((char *)title);
-	SetWindowText(SDL_Window, lpszW);
-	SDL_free(lpszW);
+		/* WinCE uses the UNICODE version */
+		LPWSTR lpszW = SDL_iconv_utf8_ucs2((char *)title);
+		SetWindowText(SDL_Window, lpszW);
+		SDL_free(lpszW);
 #else
-	Uint16 *lpsz = SDL_iconv_utf8_ucs2(title);
-	size_t len = WideCharToMultiByte(CP_ACP, 0, lpsz, -1, NULL, 0, NULL, NULL);
-	char *cvt = SDL_stack_alloc(char, len + 1);
-	WideCharToMultiByte(CP_ACP, 0, lpsz, -1, cvt, len, NULL, NULL);
-	SetWindowText(SDL_Window, cvt);
-	SDL_stack_free(cvt);
-	SDL_free(lpsz);
+		Uint16 *lpsz = SDL_iconv_utf8_ucs2(title);
+		size_t len = WideCharToMultiByte(CP_ACP, 0, lpsz, -1, NULL, 0, NULL, NULL);
+		char *cvt = SDL_stack_alloc(char, len + 1);
+		WideCharToMultiByte(CP_ACP, 0, lpsz, -1, cvt, len, NULL, NULL);
+		SetWindowText(SDL_Window, cvt);
+		SDL_stack_free(cvt);
+		SDL_free(lpsz);
 #endif
+	}
 }
 
 int WIN_IconifyWindow(_THIS)
@@ -233,6 +235,9 @@ int WIN_IconifyWindow(_THIS)
 	return(1);
 }
 
+#if defined(_WIN32_WCE) && defined(__GNUC__)
+BOOL WINAPI AllKeys(BOOL bAllKeys); /* missing in mingw32ce headers */
+#endif
 SDL_GrabMode WIN_GrabInput(_THIS, SDL_GrabMode mode)
 {
 	if ( mode == SDL_GRAB_OFF ) {

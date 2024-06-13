@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -67,6 +67,7 @@
   #if _WIN32_WCE < 420
     #define NO_CHANGEDISPLAYSETTINGS
   #else
+    #undef ChangeDisplaySettings
     #define ChangeDisplaySettings(lpDevMode, dwFlags) ChangeDisplaySettingsEx(NULL, (lpDevMode), 0, (dwFlags), 0)
   #endif
 #endif
@@ -358,7 +359,8 @@ int DIB_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	settings.dmDriverExtra = 0;
 #ifdef _WIN32_WCE
 	settings.dmFields = DM_DISPLAYQUERYORIENTATION;
-	this->hidden->supportRotation = ChangeDisplaySettingsEx(NULL, &settings, NULL, CDS_TEST, NULL) == DISP_CHANGE_SUCCESSFUL;
+	if (ChangeDisplaySettingsEx(NULL, &settings, NULL, CDS_TEST, NULL) == DISP_CHANGE_SUCCESSFUL)
+		this->hidden->supportRotation = (settings.dmDisplayOrientation != DMDO_0);
 #endif
 	/* Query for the desktop resolution */
 	SDL_desktop_mode.dmSize = sizeof(SDL_desktop_mode);
@@ -574,7 +576,9 @@ static void DIB_ResizeWindow(_THIS, int width, int height, int prev_width, int p
 			SDL_windowX = SDL_bounds.left;
 			SDL_windowY = SDL_bounds.top;
 		}
-		SetForegroundWindow(SDL_Window);
+		if ( GetParent(SDL_Window) == NULL ) {
+			SetForegroundWindow(SDL_Window);
+		}
 	}
 }
 
@@ -673,6 +677,9 @@ SDL_Surface *DIB_SetVideoMode(_THIS, SDL_Surface *current,
 	video->w = width;
 	video->h = height;
 	video->pitch = SDL_CalculatePitch(video);
+	if (!video->pitch) {
+		return(NULL);
+	}
 
 	/* Small fix for WinCE/Win32 - when activating window
 	   SDL_VideoSurface is equal to zero, so activating code
@@ -805,7 +812,7 @@ SDL_Surface *DIB_SetVideoMode(_THIS, SDL_Surface *current,
 	} else {
 #ifndef NO_CHANGEDISPLAYSETTINGS
 		if ( (prev_flags & SDL_FULLSCREEN) == SDL_FULLSCREEN ) {
-			ChangeDisplaySettings(NULL, 0);
+			ChangeDisplaySettings(NULL, CDS_FULLSCREEN);
 		}
 #endif
 		if ( flags & SDL_NOFRAME ) {
@@ -961,6 +968,7 @@ static void DIB_NormalUpdate(_THIS, int numrects, SDL_Rect *rects)
 	ReleaseDC(SDL_Window, hdc);
 }
 
+#if defined(SYSPAL_NOSTATIC) && !defined(_WIN32_WCE)
 static int FindPaletteIndex(LOGPALETTE *pal, BYTE r, BYTE g, BYTE b)
 {
 	PALETTEENTRY *entry;
@@ -996,6 +1004,7 @@ static BOOL CheckPaletteEntry(LOGPALETTE *pal, int index, BYTE r, BYTE g, BYTE b
 
 	return moved;
 }
+#endif
 
 int DIB_SetColors(_THIS, int firstcolor, int ncolors, SDL_Color *colors)
 {
@@ -1184,7 +1193,7 @@ void DIB_VideoQuit(_THIS)
 			}
 #ifndef NO_CHANGEDISPLAYSETTINGS
 			if ( this->screen->flags & SDL_FULLSCREEN ) {
-				ChangeDisplaySettings(NULL, 0);
+				ChangeDisplaySettings(NULL, CDS_FULLSCREEN);
 				ShowWindow(SDL_Window, SW_HIDE);
 			}
 #endif

@@ -29,6 +29,8 @@ Copyright (c) 1995,1996  The XFree86 Project, Inc
 #include "../extensions/extutil.h"
 #include <stdio.h>
 
+#include <stdint.h>
+
 #if defined(ENABLE_FBCON)  /* Needed for framebuffer console support */
 #include <sys/ioctl.h>
 #include <linux/fb.h>
@@ -960,8 +962,8 @@ DGAMapPhysical(
 #else
 	return False;
 #endif
-    pMap->virtual = mmap(NULL, size, PROT_READ | PROT_WRITE, 
-			MAP_FILE | MAP_SHARED, pMap->fd, (off_t)base);
+    pMap->virtual = mmap(NULL, size, PROT_READ | PROT_WRITE,
+			MAP_FILE | MAP_SHARED, pMap->fd, (off_t)((uintptr_t)base));
     if (pMap->virtual == (void *)-1)
 	return False;
 #endif

@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -30,17 +30,22 @@
  */
 
 #include <mint/cookie.h>
-#include <mint/ostruct.h>
 #include <mint/osbind.h>
 
 #include "../../events/SDL_sysevents.h"
 #include "../../events/SDL_events_c.h"
+#include "../../timer/SDL_timer_c.h"
 
 #include "SDL_atarikeys.h"
 #include "SDL_atarievents_c.h"
 #include "SDL_biosevents_c.h"
 #include "SDL_gemdosevents_c.h"
 #include "SDL_ikbdevents_c.h"
+
+/* from src/audio/mint/SDL_mintaudio.c */
+void SDL_AtariMint_UpdateAudio(void);
+/* from src/timer/mint/SDL_systimer.c */
+void SDL_AtariMint_CheckTimer(void);
 
 enum {
 	MCH_ST=0,
@@ -51,20 +56,16 @@ enum {
 	MCH_ARANYM
 };
 
-#ifndef KT_NOCHANGE
-# define KT_NOCHANGE -1
-#endif
-
 /* The translation tables from a console scancode to a SDL keysym */
 static SDLKey keymap[ATARIBIOS_MAXKEYS];
-static unsigned char *keytab_normal;
+static char *keytab_normal;
 
 void (*Atari_ShutdownEvents)(void);
 
 static void Atari_InitializeEvents(_THIS)
 {
 	const char *envr;
-	unsigned long cookie_mch;
+	long cookie_mch;
 
 	/* Test if we are on an Atari machine or not */
 	if (Getcookie(C__MCH, &cookie_mch) == C_NOTFOUND) {
@@ -139,8 +140,11 @@ void SDL_Atari_InitInternalKeymap(_THIS)
 		keymap[i] = SDLK_UNKNOWN;
 
 	/* Functions keys */
-	for ( i = 0; i<10; i++ )
+	for ( i = 0; i<10; i++ ) {
 		keymap[SCANCODE_F1 + i] = SDLK_F1+i;
+		/* Shift state is handled separately */
+		keymap[SCANCODE_SHIFT_F1 + i] = SDLK_F1+i;
+	}
 
 	/* Cursor keypad */
 	keymap[SCANCODE_HELP] = SDLK_HELP;
@@ -228,7 +232,7 @@ SDL_keysym *SDL_Atari_TranslateKey(int scancode, SDL_keysym *keysym,
 	keysym->unicode = 0;
 
 	if (keysym->sym == SDLK_UNKNOWN) {
-		keysym->sym = asciicode = keytab_normal[scancode];		
+		keysym->sym = asciicode = keytab_normal[scancode];
 	}
 
 	if (SDL_TranslateUNICODE && pressed) {
@@ -236,4 +240,10 @@ SDL_keysym *SDL_Atari_TranslateKey(int scancode, SDL_keysym *keysym,
 	}
 
 	return(keysym);
+}
+
+void SDL_AtariMint_BackgroundTasks(void)
+{
+	SDL_AtariMint_UpdateAudio();
+	if (SDL_timer_running) SDL_AtariMint_CheckTimer();
 }

@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -34,8 +34,7 @@
    into the general blitting mechanism.
 */
 
-#if ((defined(_MFC_VER) && defined(_M_IX86)/* && !defined(_WIN32_WCE) still needed? */) || \
-     defined(__WATCOMC__) || \
+#if ((defined(_MSC_VER) && defined(_M_IX86)) || \
      (defined(__GNUC__) && defined(__i386__))) && SDL_ASSEMBLY_ROUTINES
 /* There's a bug with gcc 4.4.1 and -O2 where srcp doesn't get the correct
  * value after the first scanline.  FIXME? */
@@ -44,28 +43,33 @@
 
 #ifdef USE_ASM_STRETCH
 
-#ifdef HAVE_MPROTECT
+#ifdef __WIN32__
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#elif defined(HAVE_MPROTECT)
 #include <sys/types.h>
 #include <sys/mman.h>
+#else
+#undef USE_ASM_STRETCH
 #endif
 #ifdef __GNUC__
 #define PAGE_ALIGNED __attribute__((__aligned__(4096)))
+#elif defined(_MSC_VER)
+#define PAGE_ALIGNED __declspec(align(4096))
 #else
-#define PAGE_ALIGNED
+#undef USE_ASM_STRETCH
 #endif
+#endif /**/
 
-#if defined(_M_IX86) || defined(i386)
+#ifdef USE_ASM_STRETCH
 #define PREFIX16	0x66
 #define STORE_BYTE	0xAA
 #define STORE_WORD	0xAB
 #define LOAD_BYTE	0xAC
 #define LOAD_WORD	0xAD
 #define RETURN		0xC3
-#else
-#error Need assembly opcodes for this architecture
-#endif
 
-static unsigned char copy_row[4096] PAGE_ALIGNED;
+static PAGE_ALIGNED unsigned char copy_row[4096];
 
 static int generate_rowbytes(int src_w, int dst_w, int bpp)
 {
@@ -78,8 +82,11 @@ static int generate_rowbytes(int src_w, int dst_w, int bpp)
 
 	int i;
 	int pos, inc;
-	unsigned char *eip;
+	unsigned char *eip, *fence;
 	unsigned char load, store;
+#ifdef  __WIN32__
+	DWORD oldprot;
+#endif
 
 	/* See if we need to regenerate the copy buffer */
 	if ( (src_w == last.src_w) &&
@@ -105,8 +112,13 @@ static int generate_rowbytes(int src_w, int dst_w, int bpp)
 		SDL_SetError("ASM stretch of %d bytes isn't supported\n", bpp);
 		return(-1);
 	}
-#ifdef HAVE_MPROTECT
 	/* Make the code writeable */
+#ifdef __WIN32__
+	if (!VirtualProtect(copy_row, sizeof(copy_row), PAGE_READWRITE, &oldprot)) {
+		SDL_SetError("Couldn't make copy buffer writeable");
+		return(-1);
+	}
+#elif defined(HAVE_MPROTECT)
 	if ( mprotect(copy_row, sizeof(copy_row), PROT_READ|PROT_WRITE) < 0 ) {
 		SDL_SetError("Couldn't make copy buffer writeable");
 		return(-1);
@@ -115,13 +127,20 @@ static int generate_rowbytes(int src_w, int dst_w, int bpp)
 	pos = 0x10000;
 	inc = (src_w << 16) / dst_w;
 	eip = copy_row;
+	fence = copy_row+sizeof(copy_row)-2;
 	for ( i=0; i<dst_w; ++i ) {
 		while ( pos >= 0x10000L ) {
+			if ( eip == fence ) {
+				return -1;
+			}
 			if ( bpp == 2 ) {
 				*eip++ = PREFIX16;
 			}
 			*eip++ = load;
 			pos -= 0x10000L;
+		}
+		if ( eip == fence ) {
+			return -1;
 		}
 		if ( bpp == 2 ) {
 			*eip++ = PREFIX16;
@@ -131,13 +150,13 @@ static int generate_rowbytes(int src_w, int dst_w, int bpp)
 	}
 	*eip++ = RETURN;
 
-	/* Verify that we didn't overflow (too late!!!) */
-	if ( eip > (copy_row+sizeof(copy_row)) ) {
-		SDL_SetError("Copy buffer overflow");
+	/* Make the code executable but not writeable */
+#ifdef __WIN32__
+	if (!VirtualProtect(copy_row, sizeof(copy_row), PAGE_EXECUTE_READ, &oldprot)) {
+		SDL_SetError("Couldn't make copy buffer executable");
 		return(-1);
 	}
-#ifdef HAVE_MPROTECT
-	/* Make the code executable but not writeable */
+#elif defined(HAVE_MPROTECT)
 	if ( mprotect(copy_row, sizeof(copy_row), PROT_READ|PROT_EXEC) < 0 ) {
 		SDL_SetError("Couldn't make copy buffer executable");
 		return(-1);
@@ -203,7 +222,6 @@ int SDL_SoftStretch(SDL_Surface *src, SDL_Rect *srcrect,
 	int src_locked;
 	int dst_locked;
 	int pos, inc;
-	int dst_width;
 	int dst_maxrow;
 	int src_row, dst_row;
 	Uint8 *srcp = NULL;
@@ -280,7 +298,6 @@ int SDL_SoftStretch(SDL_Surface *src, SDL_Rect *srcrect,
 	inc = (srcrect->h << 16) / dstrect->h;
 	src_row = srcrect->y;
 	dst_row = dstrect->y;
-	dst_width = dstrect->w*bpp;
 
 #ifdef USE_ASM_STRETCH
 	/* Write the opcodes for this stretch */
@@ -308,7 +325,7 @@ int SDL_SoftStretch(SDL_Surface *src, SDL_Rect *srcrect,
 			: "=&D" (u1), "=&S" (u2)
 			: "0" (dstp), "1" (srcp), "r" (copy_row)
 			: "memory" );
-#elif defined(_MSC_VER) || defined(__WATCOMC__)
+#elif defined(_MSC_VER)
 		{ void *code = copy_row;
 			__asm {
 				push edi

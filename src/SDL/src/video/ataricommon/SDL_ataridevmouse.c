@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -57,7 +57,7 @@ int SDL_AtariDevMouse_Open(void)
 
 	/* First, try SDL_MOUSEDEV device */
 	mousedev = SDL_getenv("SDL_MOUSEDEV");
-	if (!mousedev) {
+	if (mousedev) {
 		handle = open(mousedev, 0);
 	}
 

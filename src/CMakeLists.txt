@@ -12,17 +12,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Compiler options
 if(MSVC)
     # Define preprocessor definitions and MSVC-specific options
-    add_compile_definitions(WIN32 _WINDOWS)
+    #add_compile_definitions(WIN32 _WINDOWS)
     # For MSVC, disable warnings about the unchecked std::copy
-    add_compile_options(/EHsc)
+    #add_compile_options(/EHsc)
 	
     # Debug-specific options
     #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+	#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+	
 	#set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
     # Release-specific options
     #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+	#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
 else()
     add_compile_options(-D_LINUX -g)
@@ -44,6 +45,16 @@ add_compile_options(-O2)
 if (NOT MSVC)
 	find_package(SDL REQUIRED)
 	find_package(OpenGL REQUIRED)
+endif()
+
+if(WIN32)
+    #set(ZLIB_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/zlib/")
+    #set(LIBMPQ_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/libmpq")
+    set(SDL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/SDL/include")
+    #set(SDL_LIBRARY "${CMAKE_SOURCE_DIR}/SDL/lib/")
+    set(SDL_LIBRARY "SDL")
+    #set(SDL_MAIN_LIBRARY "${CMAKE_SOURCE_DIR}/SDL/lib/SDLmain.lib")
+	
 endif()
 
 # Include directories
@@ -148,8 +159,8 @@ if (MSVC)
 		GLu32.lib
 		#SDL2.lib # SDL 2.x
 		#SDL2main.lib # SDL 2.x
-		SDL.lib
-		SDLmain.lib
+        ${CMAKE_SOURCE_DIR}/SDL/lib/SDL.lib
+        ${CMAKE_SOURCE_DIR}/SDL/lib/SDLmain.lib
 		#stormlib
 		#legacy_stdio_definitions.lib
 	)
@@ -167,7 +178,7 @@ if(MSVC)
     # Additional library directories for MSVC
 	target_link_directories(wowmapview PRIVATE
         ${PROJECT_SOURCE_DIR}/lib/Windows/32bit
-        ${PROJECT_SOURCE_DIR}/SDL/lib
+        #${PROJECT_SOURCE_DIR}/SDL/lib
 		$<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/stormlib/Debug>
 		$<$<CONFIG:Release>:${CMAKE_BINARY_DIR}/stormlib/Release>
     )

@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
@@ -37,8 +37,6 @@
 #include "../SDL_audio_c.h"
 #include "../SDL_sysaudio.h"
 
-#include "../../video/ataricommon/SDL_atarimxalloc_c.h"
-
 #include "SDL_mintaudio.h"
 #include "SDL_mintaudio_stfa.h"
 
@@ -59,7 +57,7 @@
 
 /*--- Static variables ---*/
 
-static unsigned long cookie_snd, cookie_mch;
+static long cookie_snd, cookie_mch;
 static cookie_stfa_t *cookie_stfa;
 
 static const int freqs[16]={
@@ -79,11 +77,13 @@ static void Mint_UnlockAudio(_THIS);
 /* To check/init hardware audio */
 static int Mint_CheckAudio(_THIS, SDL_AudioSpec *spec);
 static void Mint_InitAudio(_THIS, SDL_AudioSpec *spec);
+static void Mint_SwapBuffers(Uint8 *nextbuf, int nextsize);
 
 /*--- Audio driver bootstrap functions ---*/
 
 static int Audio_Available(void)
 {
+	long dummy;
 	const char *envr = SDL_getenv("SDL_AUDIODRIVER");
 
 	/* Check if user asked a different audio driver */
@@ -103,12 +103,11 @@ static int Audio_Available(void)
 	}
 
 	/* Cookie STFA present ? */
-	if (Getcookie(C_STFA, (long *) &cookie_stfa) != C_FOUND) {
+	if (Getcookie(C_STFA, &dummy) != C_FOUND) {
 		DEBUG_PRINT((DEBUG_NAME "no STFA audio\n"));
 		return(0);
 	}
-
-	SDL_MintAudio_stfa = cookie_stfa;
+	cookie_stfa = (cookie_stfa_t *) dummy;
 
 	DEBUG_PRINT((DEBUG_NAME "STFA audio available!\n"));
 	return(1);
@@ -157,42 +156,19 @@ AudioBootStrap MINTAUDIO_STFA_bootstrap = {
 
 static void Mint_LockAudio(_THIS)
 {
-	void *oldpile;
-
-	/* Stop replay */
-	oldpile=(void *)Super(0);
 	cookie_stfa->sound_enable=STFA_PLAY_DISABLE;
-	Super(oldpile);
 }
 
 static void Mint_UnlockAudio(_THIS)
 {
-	void *oldpile;
-
-	/* Restart replay */
-	oldpile=(void *)Super(0);
 	cookie_stfa->sound_enable=STFA_PLAY_ENABLE|STFA_PLAY_REPEAT;
-	Super(oldpile);
 }
 
 static void Mint_CloseAudio(_THIS)
 {
-	void *oldpile;
-
-	/* Stop replay */
-	oldpile=(void *)Super(0);
 	cookie_stfa->sound_enable=STFA_PLAY_DISABLE;
-	Super(oldpile);
 
-	/* Wait if currently playing sound */
-	while (SDL_MintAudio_mutex != 0) {
-	}
-
-	/* Clear buffers */
-	if (SDL_MintAudio_audiobuf[0]) {
-		Mfree(SDL_MintAudio_audiobuf[0]);
-		SDL_MintAudio_audiobuf[0] = SDL_MintAudio_audiobuf[1] = NULL;
-	}
+	SDL_MintAudio_FreeBuffers();
 }
 
 static int Mint_CheckAudio(_THIS, SDL_AudioSpec *spec)
@@ -238,13 +214,6 @@ static int Mint_CheckAudio(_THIS, SDL_AudioSpec *spec)
 
 static void Mint_InitAudio(_THIS, SDL_AudioSpec *spec)
 {
-	void *buffer;
-	void *oldpile;
-
-	buffer = SDL_MintAudio_audiobuf[SDL_MintAudio_numbuf];
-
-	oldpile=(void *)Super(0);
-
 	/* Stop replay */
 	cookie_stfa->sound_enable=STFA_PLAY_DISABLE;
 
@@ -272,16 +241,13 @@ static void Mint_InitAudio(_THIS, SDL_AudioSpec *spec)
 	}
 
 	/* Set buffer */
-	cookie_stfa->sound_start = (unsigned long) buffer;
-	cookie_stfa->sound_end = (unsigned long) (buffer + spec->size);
+	Mint_SwapBuffers(MINTAUDIO_audiobuf[0], MINTAUDIO_audiosize);
 
 	/* Set interrupt */
 	cookie_stfa->stfa_it = SDL_MintAudio_StfaInterrupt;
 
 	/* Restart replay */
 	cookie_stfa->sound_enable=STFA_PLAY_ENABLE|STFA_PLAY_REPEAT;
-
-	Super(oldpile);
 
 	DEBUG_PRINT((DEBUG_NAME "hardware initialized\n"));
 }
@@ -295,29 +261,19 @@ static int Mint_OpenAudio(_THIS, SDL_AudioSpec *spec)
 		return -1;
 	}
 
-	SDL_CalculateAudioSpec(spec);
-
-	/* Allocate memory for audio buffers in DMA-able RAM */
-	DEBUG_PRINT((DEBUG_NAME "buffer size=%d\n", spec->size));
-
-	SDL_MintAudio_audiobuf[0] = Atari_SysMalloc(spec->size *2, MX_STRAM);
-	if (SDL_MintAudio_audiobuf[0]==NULL) {
-		SDL_SetError("MINT_OpenAudio: Not enough memory for audio buffer");
-		return (-1);
+	if (!SDL_MintAudio_InitBuffers(spec)) {
+		return -1;
 	}
-	SDL_MintAudio_audiobuf[1] = SDL_MintAudio_audiobuf[0] + spec->size ;
-	SDL_MintAudio_numbuf=0;
-	SDL_memset(SDL_MintAudio_audiobuf[0], spec->silence, spec->size *2);
-	SDL_MintAudio_audiosize = spec->size;
-	SDL_MintAudio_mutex = 0;
-
-	DEBUG_PRINT((DEBUG_NAME "buffer 0 at 0x%08x\n", SDL_MintAudio_audiobuf[0]));
-	DEBUG_PRINT((DEBUG_NAME "buffer 1 at 0x%08x\n", SDL_MintAudio_audiobuf[1]));
-
-	SDL_MintAudio_CheckFpu();
 
 	/* Setup audio hardware */
+	MINTAUDIO_swapbuf = Mint_SwapBuffers;
 	Mint_InitAudio(this, spec);
 
     return(1);	/* We don't use threaded audio */
+}
+
+static void Mint_SwapBuffers(Uint8 *nextbuf, int nextsize)
+{
+	cookie_stfa->sound_start = (unsigned long) nextbuf;
+	cookie_stfa->sound_end = cookie_stfa->sound_start + nextsize;
 }

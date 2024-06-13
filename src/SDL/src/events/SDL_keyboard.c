@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -334,8 +334,19 @@ int SDL_KeyboardInit(void)
 	/* Done.  Whew. */
 	return(0);
 }
+
+#ifdef _WIN32
+extern void WIN_ResetDeadKeys(void);
+#endif
+#ifdef _WIN32_WCE
+#define WIN_ResetDeadKeys() do {} while(0)
+#endif
+
 void SDL_KeyboardQuit(void)
 {
+#if defined(_WIN32) && !defined(SDL_VIDEO_DISABLED)
+	WIN_ResetDeadKeys();
+#endif
 }
 
 /* We lost the keyboard, so post key up messages for all pressed keys */
@@ -362,6 +373,11 @@ int SDL_EnableUNICODE(int enable)
 	if ( enable >= 0 ) {
 		SDL_TranslateUNICODE = enable;
 	}
+#if defined(_WIN32) && !defined(SDL_VIDEO_DISABLED)
+	if (enable != old_mode) {
+		WIN_ResetDeadKeys();
+	}
+#endif
 	return(old_mode);
 }
 

@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -38,6 +38,5 @@ extern void X11_FreeVideoModes(_THIS);
 extern int X11_ResizeFullScreen(_THIS);
 extern void X11_WaitMapped(_THIS, Window win);
 extern void X11_WaitUnmapped(_THIS, Window win);
-extern void X11_QueueEnterFullScreen(_THIS);
 extern int X11_EnterFullScreen(_THIS);
 extern int X11_LeaveFullScreen(_THIS);

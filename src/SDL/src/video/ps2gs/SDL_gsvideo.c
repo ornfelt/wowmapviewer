@@ -1,6 +1,6 @@
 /*
     SDL - Simple DirectMedia Layer
-    Copyright (C) 1997-2009 Sam Lantinga
+    Copyright (C) 1997-2012 Sam Lantinga
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
@@ -479,6 +479,9 @@ static SDL_Surface *GS_SetVideoMode(_THIS, SDL_Surface *current,
 	current->w = width;
 	current->h = height;
 	current->pitch = SDL_CalculatePitch(current);
+	if (!current->pitch) {
+		return(NULL);
+	}
 
 	/* Memory map the DMA area for block memory transfer */
 	if ( ! mapped_mem ) {

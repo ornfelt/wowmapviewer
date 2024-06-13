@@ -110,7 +110,7 @@ extern "C" {
   #else                                           // RELEASE VERSIONS
     #ifndef _UNICODE                            
       #ifdef _DLL
-        #pragma comment(lib, "StormLibRAD.lib")   // Release Ansi CRT-DLL version
+        #pragma comment(lib, "StormLibR.lib")   // Release Ansi CRT-DLL version
       #else        
         #pragma comment(lib, "StormLibRAS.lib")   // Release Ansi CRT-LIB version
       #endif
