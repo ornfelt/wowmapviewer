@@ -8,3 +8,4 @@ output
 *.obj
 *.iobj
 src/build
+src/build2

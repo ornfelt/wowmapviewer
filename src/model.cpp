@@ -20,7 +20,23 @@ Model::Model(std::string name, bool forceAnim) : ManagedItem(name), forceAnim(fo
 		//name = "character\\human\\male\\humanmale.m2";
 		//name = "creature\\bloodelfmalekid\\bloodelfmalekid.m2";
 		//name = "creature\\undeaddrake\\undeaddrake.m2";
-		name = "creature\\illidan\\illidan.m2";
+		//name = "creature\\illidan\\illidan.m2";
+		//name = "creature\\deathwing\\deathwing.m2";
+		//name = "creature\\protodragon\\protodragon.m2";
+		//name = "creature\\pandarenmonk\\pandarenmonk.m2";
+		//name = "creature\\skeletonnaked\\skeletonnaked.m2";
+		//name = "SPELLS\\Frostbolt.M2";
+		//name = "SPELLS\\Pyroblast_missile.M2";
+
+		//name = "SPELLS\\FirelandsSky_Fireball01_Spell.M2";
+		//name = "SPELLS\\ChainLightning_Impact_Chest.m2";
+		//name = "SPELLS\\Firelands_Fire_2d.M2";
+		//name = "SPELLS\\Firelands_Fire_2d_B.M2";
+		//name = "SPELLS\\Firelands_Fire_2d_C.M2";
+		name = "SPELLS\\FireNova_Area.m2";
+		//name = "";
+		//name = "";
+		//name = "";
 	}
 
 	if (name == "")
@@ -282,7 +298,8 @@ void Model::initCommon(MPQFile &f)
 			} else {
 				// special texture - only on characters and such...
                 textures[i] = 0;
-				specialTextures[i] = texdef[i].type;
+				// Is this needed?
+				//specialTextures[i] = texdef[i].type;
 
 				if (texdef[i].type < TEXTURE_MAX)
 					useReplaceTextures[texdef[i].type] = true;
@@ -291,6 +308,19 @@ void Model::initCommon(MPQFile &f)
 					// a fix for weapons with type-3 textures.
 					replaceTextures[texdef[i].type] = video.textures.add("Item\\ObjectComponents\\Weapon\\ArmorReflect4.BLP");
 				}
+
+				std::cout << "Loading char/creature texture: " << i << std::endl;
+				//if (i == 0)
+				//	textures[i] = video.textures.add("creature\\pandarenmonk\\pandaren.blp");
+
+				//if (i == 0)
+				//	textures[i] = video.textures.add("creature\\skeletonnaked\\skeletonnakedskin_white.blp");
+
+				//if (i == 0)
+				//	textures[i] = video.textures.add("creature\\protodragon\\ProtoDragon_NorthrendBlue.blp");
+				//else if (i == 3)
+				//	//textures[i] = video.textures.add("creature\\protodragon\\ProtoDragon_NorthrendHairBlack.blp");
+				//	textures[i] = video.textures.add("creature\\protodragon\\PROTODRAGONSADDLE.blp");
 			}
 		}
 	}
