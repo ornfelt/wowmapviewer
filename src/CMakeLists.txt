@@ -150,9 +150,9 @@ if (MSVC)
     #    "/NODEFAULTLIB:LIBCMT.lib"
     #)
 	
-	target_link_options(wowmapview PRIVATE
-        "/MACHINE:X86"
-    )
+	#target_link_options(wowmapview PRIVATE
+    #    "/MACHINE:X86"
+    #)
 
 	target_link_libraries(wowmapview
 		OpenGL32.lib
@@ -164,6 +164,8 @@ if (MSVC)
 		#stormlib
 		#legacy_stdio_definitions.lib
 	)
+
+	set_target_properties(wowmapview PROPERTIES LINK_FLAGS "/FORCE:MULTIPLE")
 	
 else()
 	target_link_libraries(wowmapview

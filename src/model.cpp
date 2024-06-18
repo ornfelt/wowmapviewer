@@ -15,7 +15,7 @@ Model::Model(std::string name, bool forceAnim) : ManagedItem(name), forceAnim(fo
 		|| name == "World\\Generic\\Ogre\\Passive Doodads\\Torches\\Ogrewalltorchred.M2"
 		|| name == "World\\Generic\\Orc\\Passive Doodads\\Voodoostuff\\Bubblingbowl01.M2")
 	{
-		DEBUG_PRINT("Loading model %s%s\n", name);
+		//DEBUG_PRINT("Loading model %s%s\n", name);
 		//name = "spells\\blizzard_impact_base.m2";
 		//name = "character\\human\\male\\humanmale.m2";
 		//name = "creature\\bloodelfmalekid\\bloodelfmalekid.m2";
@@ -33,10 +33,23 @@ Model::Model(std::string name, bool forceAnim) : ManagedItem(name), forceAnim(fo
 		//name = "SPELLS\\Firelands_Fire_2d.M2";
 		//name = "SPELLS\\Firelands_Fire_2d_B.M2";
 		//name = "SPELLS\\Firelands_Fire_2d_C.M2";
-		name = "SPELLS\\FireNova_Area.m2";
-		//name = "";
-		//name = "";
-		//name = "";
+		//name = "SPELLS\\FireNova_Area.m2";
+		//name = "SPELLS\\Meteor_Ball_Missile.m2";
+		//name = "SPELLS\\Metamorphosis.m2";
+		//name = "SPELLS\\Meteor_Ball_Shadow_Missile.M2";
+		//name = "SPELLS\\Shaman_Thunder.M2"; // wtf?
+		//name = "CREATURE\\OrcMaleWarriorHeavy\\OrcMaleWarriorHeavy.m2";
+
+		name = "CREATURE\\Ysera\\Ysera.M2";
+		//name = "CREATURE\\ARTHASLICHKING\\ArthasLichKing.M2";
+		//name = "CREATURE\\Ragnaros\\Ragnaros.M2"; // Also ragnaros2
+
+		//CREATURE\ABYSSALILLIDAN\Abyssal_Illidan.m2
+		// CREATURE\ABYSSALILLIDAN\INFERNALSKIN_ILLADIN.BLP
+		// CREATURE\ABYSSALILLIDAN\INFERNALSKIN_ILLADIN_02.BLP
+		// CREATURE\ABYSSALILLIDAN\INFERNALSKIN_ILLADIN_03.BLP
+		//name = "spectraltiger, garrosh etc.
+
 	}
 
 	if (name == "")
@@ -321,6 +334,30 @@ void Model::initCommon(MPQFile &f)
 				//else if (i == 3)
 				//	//textures[i] = video.textures.add("creature\\protodragon\\ProtoDragon_NorthrendHairBlack.blp");
 				//	textures[i] = video.textures.add("creature\\protodragon\\PROTODRAGONSADDLE.blp");
+
+				//if (i == 0)
+				//	textures[i] = video.textures.add("CREATURE\\OrcMaleWarriorHeavy\\OrcNPCSkin.blp");
+				//else if (i == 1)
+				//	textures[i] = video.textures.add("CREATURE\\OrcMaleWarriorHeavy\\OrcMaleSamuHairSkin.blp");
+
+				//if (i == 0)
+				//	textures[i] = video.textures.add("CREATURE\\Ragnaros\\RAGNAROSSKIN.BLP");
+				//else if (i == 1)
+				//	textures[i] = video.textures.add("CREATURE\\Ragnaros\\RAGNAROSHAMMER.BLP");
+
+				if (i == 0)
+					textures[i] = video.textures.add("CREATURE\\Ysera\\Ysera1.blp");
+				else if (i == 1)
+					textures[i] = video.textures.add("CREATURE\\Ysera\\Ysera2.blp");
+
+				// TODO: double check
+				//if (i == 0)
+				//	textures[i] = video.textures.add("CREATURE\ARTHASLICHKING\Sword_2H_Frostmourne_Arthas2.blp");
+				//else if (i == 1)
+				//	textures[i] = video.textures.add("CREATURE\ARTHASLICHKING\ARTHASLICHKING_01.BLP");
+				//else if (i == 2)
+				//	textures[i] = video.textures.add("CREATURE\ARTHASLICHKING\ARTHASLICHKING_02.BLP");
+				//	//textures[i] = video.textures.add("CREATURE\ARTHASLICHKING\ArthasLichKing_v2_01.blp");
 			}
 		}
 	}
