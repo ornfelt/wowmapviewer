@@ -9,3 +9,5 @@ output
 *.iobj
 src/build
 src/build2
+bin/wowmapview
+
