@@ -69,7 +69,7 @@ void Video::init(int xres, int yres, bool fullscreen)
 	}
 
 	initExtensions();
-	initShaders();
+	//initShaders();
 
 	this->xres = xres;
 	this->yres = yres;
