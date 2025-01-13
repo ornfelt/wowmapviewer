@@ -86,6 +86,7 @@ Model::Model(std::string name, bool forceAnim) : ManagedItem(name), forceAnim(fo
 
 	gLog("Loading model %s%s\n", tempname, animated ? " (animated)" : "");
 	//DEBUG_PRINT("Loading model %s%s\n", tempname, animated ? " (animated)" : "");
+    std::cout << "Loading model: " << tempname << std::endl;
 
 	// Initiate our model variables.
 	trans = 1.0f;

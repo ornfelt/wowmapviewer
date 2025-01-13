@@ -23,18 +23,20 @@ struct FileTreeItem {
 	}
 };
 
-
 class MPQArchive
 {
 	//MPQHANDLE handle;
 	HANDLE mpq_a;
 	bool ok;
+    std::string path;
 public:
 	MPQArchive(const char* filename);
 	~MPQArchive();
 	bool isPartialMPQ(const char* filename);
 
 	void close();
+
+    const std::string& getPath() const;
 };
 
 

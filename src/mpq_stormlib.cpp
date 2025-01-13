@@ -10,7 +10,8 @@ using namespace std;
 typedef vector< pair< string, HANDLE* > > ArchiveSet;
 static ArchiveSet gOpenArchives;
 
-MPQArchive::MPQArchive(const char* filename) : ok(false)
+MPQArchive::MPQArchive(const char* filename) : ok(false), path(filename)
+//MPQArchive::MPQArchive(const char* filename) : ok(false)
 {
 	if (!SFileOpenArchive(filename, 0, MPQ_OPEN_FORCE_MPQ_V1|MPQ_OPEN_READ_ONLY, &mpq_a )) {
 		int nError = GetLastError();
@@ -44,6 +45,10 @@ MPQArchive::MPQArchive(const char* filename) : ok(false)
 
 	ok = true;
 	gOpenArchives.push_back( make_pair( filename, &mpq_a ) );
+}
+
+const std::string& MPQArchive::getPath() const {
+    return path;
 }
 
 MPQArchive::~MPQArchive()

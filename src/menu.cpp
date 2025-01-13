@@ -165,6 +165,8 @@ void Menu::tick(float t, float dt)
 
 				float fx = (x/12.0f);
 				float fz = (y/12.0f);
+                std::cout << "x: " <<  fx << std::endl;
+                std::cout << "z: " <<  fz << std::endl;
 
 				cx = (int)fx;
 				cz = (int)fz;

@@ -233,6 +233,11 @@ int main(int argc, char *argv[])
 
 	OpenDBs();
 
+    // Debug print archives
+    //for (const auto& archive : archives) {
+    //    std::cout << archive->getPath() << std::endl;
+    //}
+
 	video.init(xres,yres,fullscreen!=0);
 	SDL_WM_SetCaption(APP_TITLE,NULL);
 
