@@ -241,7 +241,8 @@ MapTile::MapTile(int x0, int z0, std::string basename, bool bigAlpha): x(x0), z(
 	zbase = z0 * TILESIZE;
 	mBigAlpha=bigAlpha;
 
-	gLog("Loading tile %d,%d\n",x0,z0);
+	//gLog("Loading tile %d,%d\n",x0,z0);
+	std::cout << "Loading tile: " << x0 << ", " << z0 << std::endl;
 
 	 // [FLOW] DON'T REMOVE i use this file extraction method to debug the adt format
 /*
