@@ -10,4 +10,6 @@ output
 src/build
 src/build2
 bin/wowmapview
+bin/wowmapview.exe
+bin/draco.dll
 
