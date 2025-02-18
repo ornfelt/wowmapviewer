@@ -34,8 +34,8 @@ if(NO_PRINT)
     add_compile_definitions(NO_PRINT)
 endif()
 
-# Global optimizations
-add_compile_options(-O2)
+# Global optimizations (disable for now since it causes optimization conflicts)
+#add_compile_options(-O2)
 # Target specific optimization
 #target_compile_options(wowmapview PRIVATE -O2)
 # Build Type Specific optimization flag...
@@ -191,6 +191,10 @@ if(MSVC)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/../bin/arial.info" $<TARGET_FILE_DIR:wowmapview>
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${PROJECT_SOURCE_DIR}/../bin/SDL.dll" $<TARGET_FILE_DIR:wowmapview>
 		COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_SOURCE_DIR}/../bin/shaders/" $<TARGET_FILE_DIR:wowmapview>/shaders
+        # Copy StormLib.dll
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+            ${CMAKE_BINARY_DIR}/stormlib/$<CONFIG>/StormLib.dll 
+            ${CMAKE_BINARY_DIR}/$<CONFIG>/StormLib.dll
     )
 else()
     # Post-build copy command for non-MSVC environments
@@ -198,3 +202,4 @@ else()
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:wowmapview> ${PROJECT_SOURCE_DIR}/../bin/
     )
 endif()
+

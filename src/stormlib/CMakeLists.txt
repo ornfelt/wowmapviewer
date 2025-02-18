@@ -491,6 +491,12 @@ add_library(stormlib_static STATIC ${SOURCES})
 
 # Link libraries
 if (MSVC)
+    # Change name
+    #set_target_properties(stormlib PROPERTIES
+    #    OUTPUT_NAME_DEBUG "StormLibD"
+    #    OUTPUT_NAME_RELEASE "StormLib"
+    #)
+
 	#target_link_libraries(stormlib PRIVATE bz2 z)
   
 	# Specify subsystem and target machine for linker
@@ -555,4 +561,19 @@ if(MSVC)
   
   # Set MSVC toolset version
   #set(CMAKE_GENERATOR_TOOLSET "v143" CACHE STRING "Platform Toolset" FORCE)
+endif()
+
+# Rename lib after compile
+#if(MSVC AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(MSVC)
+  add_custom_command(TARGET stormlib POST_BUILD
+    #COMMAND ${CMAKE_COMMAND} -E rename 
+    COMMAND ${CMAKE_COMMAND} -E copy
+      "$<TARGET_LINKER_FILE_DIR:stormlib>/$<TARGET_LINKER_FILE_NAME:stormlib>"
+      "$<TARGET_LINKER_FILE_DIR:stormlib>/$<TARGET_LINKER_FILE_BASE_NAME:stormlib>DAD.lib"
+    COMMENT "Renaming the import library for Debug build"
+    VERBATIM
+    COMMAND_EXPAND_LISTS
+    CONFIGURATIONS Debug
+  )
 endif()

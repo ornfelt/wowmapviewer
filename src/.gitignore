@@ -2,4 +2,6 @@
 *.suo
 build/
 build_64/
+build_/
+build_new
 stormlib/bin/
